@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaris — Data Architect</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+:root {
+  --navy:#1b4f72; --blue:#2e86c1; --ink:#1c2b3a; --slate:#2d3f50;
+  --mist:#f0f7fc; --ghost:#fafcfe; --frost:#d0e4f0; --ice:#eaf2f8;
+  --haze:#aec9dc; --steel:#7f9aae;
+  --tag-blue-bg:#d6eaf8; --tag-red-bg:#fde8e8; --red:#922b21;
+  --white:#ffffff;
+  --top-h:48px; --left-w:232px; --right-w:380px; --trans:0.2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter','Helvetica Neue',Arial,sans-serif;background:#f4f6f8;color:var(--ink);font-size:13px;line-height:1.6;overflow:hidden;height:100vh;width:100vw;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--haze);border-radius:3px;}::-webkit-scrollbar-thumb:hover{background:var(--steel);}
+
+/* ── TOP BAR ── */
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--top-h);background:var(--navy);display:flex;align-items:center;padding:0 16px;z-index:100;gap:8px;}
+.topbar-brand{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--haze);margin-right:12px;white-space:nowrap;user-select:none;}
+.topbar-brand strong{color:#fff;font-weight:700;}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,0.15);margin:0 8px;}
+.topbar-project-name{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:#fff;font-size:12.5px;font-weight:500;padding:5px 12px;outline:none;min-width:180px;font-family:inherit;transition:border-color var(--trans);}
+.topbar-project-name:focus{border-color:var(--blue);}
+.topbar-project-name::placeholder{color:rgba(255,255,255,0.35);}
+.topbar-spacer{flex:1;}
+.topbar-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:rgba(255,255,255,0.85);font-size:11.5px;font-weight:500;padding:5px 12px;cursor:pointer;font-family:inherit;transition:all var(--trans);white-space:nowrap;}
+.topbar-btn:hover{background:rgba(255,255,255,0.15);color:#fff;}
+.topbar-btn .material-icons-outlined{font-size:16px;}
+.topbar-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+.topbar-btn.primary:hover{background:#2578b0;}
+
+/* ── LEFT PANEL ── */
+.left-panel{position:fixed;top:var(--top-h);left:0;bottom:0;width:var(--left-w);background:var(--white);border-right:1px solid var(--frost);display:flex;flex-direction:column;z-index:50;overflow:hidden;transition:width 0.2s ease;}
+body.lp-hidden .left-panel{width:0;border-right:none;}
+body.lp-hidden .canvas-area{left:0 !important;}
+body.lp-hidden .zoom-indicator{left:16px !important;}
+.lp-section{padding:16px;border-bottom:1px solid var(--ice);flex-shrink:0;}
+.lp-section-label{font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;}
+.lp-btn{display:flex;align-items:center;gap:8px;width:100%;background:none;border:1px solid var(--frost);border-radius:4px;padding:8px 10px;color:var(--slate);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all var(--trans);margin-bottom:6px;}
+.lp-btn:last-child{margin-bottom:0;}
+.lp-btn:hover{background:var(--mist);border-color:var(--haze);color:var(--navy);}
+.lp-btn .material-icons-outlined{font-size:17px;color:var(--blue);}
+.lp-entity-list{flex:1;overflow-y:auto;padding:12px 16px;}
+.lp-entity-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;cursor:pointer;transition:all var(--trans);margin-bottom:2px;font-size:12px;font-weight:500;color:var(--slate);}
+.lp-entity-item:hover{background:var(--mist);}
+.lp-entity-item.active{background:var(--tag-blue-bg);color:var(--navy);font-weight:600;}
+.lp-entity-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.lp-entity-count{margin-left:auto;font-size:10px;color:var(--steel);font-weight:400;}
+.lp-empty{text-align:center;padding:32px 16px;color:var(--steel);font-size:11.5px;line-height:1.7;}
+.lp-empty .material-icons-outlined{font-size:32px;color:var(--haze);display:block;margin-bottom:8px;}
+/* Group items in left panel */
+.lp-group-header{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:4px;cursor:default;margin-bottom:2px;font-size:11.5px;font-weight:600;color:var(--slate);background:var(--ghost);border:1px solid var(--frost);}
+.lp-group-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.lp-group-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lp-group-count{font-size:10px;color:var(--steel);font-weight:400;flex-shrink:0;}
+.lp-group-actions{display:flex;gap:1px;opacity:0;transition:opacity var(--trans);}
+.lp-group-header:hover .lp-group-actions{opacity:1;}
+.lp-group-action{background:none;border:none;cursor:pointer;color:var(--haze);padding:2px;border-radius:3px;display:flex;transition:all var(--trans);}
+.lp-group-action:hover{color:var(--navy);background:var(--ice);}
+.lp-group-action.danger:hover{color:var(--red);background:var(--tag-red-bg);}
+.lp-group-action .material-icons-outlined{font-size:13px;}
+.lp-group-entities{padding-left:10px;margin-bottom:4px;}
+.lp-ungrouped-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--steel);padding:8px 8px 4px;opacity:0.7;}
+
+/* ── CANVAS ── */
+.canvas-area{position:fixed;top:var(--top-h);left:var(--left-w);right:0;bottom:0;overflow:hidden;background:#f4f6f8;background-image:radial-gradient(circle,var(--frost) 1px,transparent 1px);background-size:24px 24px;cursor:grab;transition:left 0.2s ease,right 0.3s ease;}
+.canvas-area.grabbing{cursor:grabbing;}
+.canvas-area.rpopen{right:var(--right-w);}
+.canvas-viewport{position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0;}
+.canvas-svg{position:absolute;top:0;left:0;width:6000px;height:6000px;pointer-events:none;overflow:visible;}
+.rel-path{fill:none;stroke:var(--haze);stroke-width:1.5;pointer-events:stroke;cursor:pointer;}
+.rel-path:hover{stroke:var(--blue);stroke-width:2;}
+.rel-label{font-family:'Inter',sans-serif;font-size:9.5px;font-weight:600;fill:var(--steel);pointer-events:none;}
+
+/* ── GROUP BLOCKS ── */
+.group-block{position:absolute;border-radius:8px;border:2px dashed;pointer-events:none;z-index:1;}
+.group-block-label{position:absolute;top:-11px;left:14px;font-size:10px;font-weight:700;letter-spacing:0.4px;padding:1px 8px;border-radius:3px;white-space:nowrap;color:#fff;}
+
+/* ── ENTITY CARD ── */
+.entity-card{position:absolute;background:var(--white);border:1.5px solid var(--frost);border-radius:6px;min-width:200px;max-width:280px;box-shadow:0 1px 4px rgba(28,43,58,0.06);cursor:default;user-select:none;transition:box-shadow var(--trans),border-color var(--trans);z-index:10;}
+.entity-card:hover{box-shadow:0 3px 12px rgba(28,43,58,0.1);}
+.entity-card.selected{border-color:var(--blue);box-shadow:0 3px 16px rgba(46,134,193,0.18);z-index:20;}
+.entity-card.has-error{border-color:var(--red);}
+.entity-header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--ice);cursor:move;border-radius:6px 6px 0 0;}
+.entity-color-bar{width:4px;height:18px;border-radius:2px;flex-shrink:0;}
+.entity-name{font-size:12px;font-weight:700;color:var(--navy);letter-spacing:0.3px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.entity-badge{font-size:9px;font-weight:600;color:var(--steel);background:var(--ice);padding:1px 6px;border-radius:3px;flex-shrink:0;}
+.card-toggle-btn{background:none;border:none;cursor:pointer;color:var(--haze);display:flex;padding:2px;border-radius:3px;transition:all var(--trans);flex-shrink:0;}
+.card-toggle-btn:hover{color:var(--navy);background:var(--ice);}
+.card-toggle-btn .material-icons-outlined{font-size:14px;}
+.entity-fields{padding:6px 0;}
+.entity-field-row{display:flex;align-items:center;gap:6px;padding:3px 14px;font-size:11px;color:var(--slate);}
+.entity-field-icon{font-size:13px;color:var(--haze);flex-shrink:0;width:16px;text-align:center;}
+.entity-field-icon.pk{color:#d4a017;}.entity-field-icon.fk{color:var(--blue);}.entity-field-icon.ref{color:#e67e22;}.entity-field-icon.idx{color:#27ae60;}
+.entity-field-name{font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.entity-field-type{font-size:10px;color:var(--steel);font-family:'Courier New',monospace;flex-shrink:0;}
+.entity-more{padding:4px 14px 8px;font-size:10px;color:var(--steel);font-style:italic;}
+
+/* ── RIGHT PANEL ── */
+.right-panel{position:fixed;top:var(--top-h);right:0;bottom:0;width:var(--right-w);background:var(--white);border-left:1px solid var(--frost);z-index:50;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s ease;overflow:hidden;}
+.right-panel.open{transform:translateX(0);}
+.rp-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--ice);flex-shrink:0;}
+.rp-header-color{width:6px;height:24px;border-radius:3px;flex-shrink:0;}
+.rp-title{font-size:14px;font-weight:700;color:var(--navy);flex:1;}
+.rp-close{background:none;border:none;cursor:pointer;color:var(--steel);display:flex;padding:4px;border-radius:4px;transition:all var(--trans);}
+.rp-close:hover{background:var(--ice);color:var(--navy);}
+.rp-close .material-icons-outlined{font-size:18px;}
+.rp-body{flex:1;overflow-y:auto;padding:0;}
+.rp-section{padding:16px 18px;border-bottom:1px solid var(--ice);}
+.rp-section-label{font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;}
+.rp-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}.rp-row:last-child{margin-bottom:0;}
+.rp-input-group{flex:1;}
+.rp-label{display:block;font-size:10px;font-weight:600;color:var(--steel);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
+.rp-input,.rp-select,.rp-textarea{width:100%;background:var(--ghost);border:1px solid var(--frost);border-radius:4px;padding:7px 10px;font-size:12px;font-family:inherit;color:var(--ink);outline:none;transition:border-color var(--trans);}
+.rp-input:focus,.rp-select:focus,.rp-textarea:focus{border-color:var(--blue);}
+.rp-textarea{resize:vertical;min-height:60px;line-height:1.6;}
+.rp-select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237f9aae'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;}
+.rp-check-row{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--slate);cursor:pointer;}.rp-check-row input{accent-color:var(--blue);cursor:pointer;}
+.rp-field-card{background:var(--ghost);border:1px solid var(--frost);border-radius:5px;margin-bottom:8px;overflow:hidden;transition:border-color var(--trans);}
+.rp-field-card:hover{border-color:var(--haze);}
+.rp-field-card-header{display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;background:var(--white);transition:background var(--trans);}
+.rp-field-card-header:hover{background:var(--mist);}
+.rp-field-card-name{font-size:12px;font-weight:600;color:var(--navy);flex:1;}
+.rp-field-card-type{font-size:10px;font-family:'Courier New',monospace;color:var(--steel);}
+.rp-field-card-badges{display:flex;gap:3px;}
+.rp-field-badge{font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;letter-spacing:0.5px;}
+.rp-field-badge.pk{background:#fef3cd;color:#856404;}.rp-field-badge.fk{background:var(--tag-blue-bg);color:var(--navy);}
+.rp-field-badge.idx{background:#d5f5e3;color:#1e8449;}.rp-field-badge.uq{background:#e8daef;color:#6c3483;}.rp-field-badge.nn{background:var(--tag-red-bg);color:var(--red);}.rp-field-badge.ref{background:#fdebd0;color:#af601a;}
+.rp-drag-handle{cursor:grab;color:var(--haze);display:flex;align-items:center;flex-shrink:0;transition:color var(--trans);margin-right:2px;}
+.rp-drag-handle:hover{color:var(--slate);}
+.rp-drag-handle .material-icons-outlined{font-size:15px;}
+.rp-field-card.drag-over{border-color:var(--blue) !important;background:var(--mist);}
+.rp-field-card-actions{display:flex;gap:2px;}
+.rp-field-action{background:none;border:none;cursor:pointer;color:var(--haze);padding:2px;border-radius:3px;display:flex;transition:all var(--trans);}
+.rp-field-action:hover{color:var(--navy);background:var(--ice);}
+.rp-field-action.delete:hover{color:var(--red);background:var(--tag-red-bg);}
+.rp-field-action .material-icons-outlined{font-size:15px;}
+.rp-field-card-body{padding:10px 12px;border-top:1px solid var(--ice);display:none;}
+.rp-field-card.expanded .rp-field-card-body{display:block;}
+.rp-add-btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:8px;background:none;border:1px dashed var(--frost);border-radius:4px;color:var(--blue);font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:all var(--trans);}
+.rp-add-btn:hover{background:var(--mist);border-color:var(--blue);}
+.rp-add-btn .material-icons-outlined{font-size:15px;}
+.rp-color-grid{display:flex;gap:6px;flex-wrap:wrap;}
+.rp-color-swatch{width:24px;height:24px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all var(--trans);}
+.rp-color-swatch:hover{transform:scale(1.15);}
+.rp-color-swatch.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--white),0 0 0 3.5px var(--ink);}
+.rp-footer{padding:12px 18px;border-top:1px solid var(--ice);display:flex;gap:8px;flex-shrink:0;}
+.rp-footer-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:4px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all var(--trans);}
+.rp-footer-btn.danger{background:var(--tag-red-bg);color:var(--red);}.rp-footer-btn.danger:hover{background:#fbd0d0;}
+.rp-footer-btn .material-icons-outlined{font-size:15px;}
+
+/* ── RESIZE HANDLES ── */
+.resize-handle{position:absolute;top:0;bottom:0;width:5px;cursor:col-resize;z-index:60;transition:background var(--trans);}
+.resize-handle:hover,.resize-handle.active{background:rgba(46,134,193,0.35);}
+.left-resize{right:0;}
+.right-resize{left:0;}
+
+/* ── ZOOM ── */
+.zoom-indicator{position:fixed;bottom:16px;left:calc(var(--left-w) + 16px);background:var(--white);border:1px solid var(--frost);border-radius:4px;padding:4px 10px;font-size:10.5px;font-weight:600;color:var(--steel);z-index:30;display:flex;align-items:center;gap:6px;user-select:none;transition:left 0.2s ease;}
+.zoom-btn{background:none;border:none;cursor:pointer;color:var(--steel);display:flex;padding:2px;border-radius:3px;transition:all var(--trans);}
+.zoom-btn:hover{color:var(--navy);background:var(--ice);}
+.zoom-btn .material-icons-outlined{font-size:16px;}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(28,43,58,0.4);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:8px;box-shadow:0 12px 40px rgba(28,43,58,0.2);max-width:90vw;max-height:80vh;overflow-y:auto;}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--ice);display:flex;align-items:center;gap:10px;}
+.modal-title{font-size:14px;font-weight:700;color:var(--navy);flex:1;}
+.modal-body{padding:18px 22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--ice);display:flex;justify-content:flex-end;gap:8px;}
+.modal-btn{padding:8px 18px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid var(--frost);background:var(--white);color:var(--slate);transition:all var(--trans);}
+.modal-btn:hover{background:var(--mist);}
+.modal-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;}.modal-btn.primary:hover{background:#2578b0;}
+.modal-btn.danger{background:var(--tag-red-bg);border-color:var(--tag-red-bg);color:var(--red);}.modal-btn.danger:hover{background:#fbd0d0;}
+.rel-modal{width:520px;}
+.ddl-modal{width:640px;}
+.ddl-pre{background:var(--ink);color:#c8e0c8;padding:18px;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;line-height:1.7;overflow-x:auto;white-space:pre;max-height:50vh;}
+/* Group modal */
+.group-modal{width:380px;}
+/* Help modal */
+.help-modal{width:960px;}
+.help-columns{display:flex;gap:28px;align-items:flex-start;}
+.help-col{flex:1;min-width:0;}
+.help-col-wide{flex:1.55;min-width:0;}
+.help-section{margin-bottom:22px;}
+.help-section:last-child{margin-bottom:0;}
+.help-section-title{font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--ice);}
+.help-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.help-table th{padding:7px 12px;text-align:left;background:var(--navy);color:#fff;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.help-table td{padding:6px 12px;border-bottom:1px solid var(--ice);color:var(--slate);vertical-align:top;line-height:1.5;}
+.help-table tr:nth-child(even) td{background:var(--ghost);}
+.help-kbd{display:inline-block;background:var(--ice);border:1px solid var(--haze);border-radius:3px;padding:1px 6px;font-family:'Courier New',monospace;font-size:11px;color:var(--navy);white-space:nowrap;}
+.report-badge{display:inline-block;font-size:8px;font-weight:700;padding:1px 5px;border-radius:2px;letter-spacing:0.5px;margin-right:2px;white-space:nowrap;}
+.report-badge.pk{background:#fef3cd;color:#856404;}
+.report-badge.fk{background:#d6eaf8;color:#1b4f72;}
+.report-badge.ref{background:#fdebd0;color:#af601a;}
+.report-badge.nn{background:#fde8e8;color:#922b21;}
+.report-badge.uq{background:#e8daef;color:#6c3483;}
+.report-badge.idx{background:#d5f5e3;color:#1e8449;}
+.report-badge.ai{background:#eaf2f8;color:#2e86c1;}
+.unsaved-indicator{width:7px;height:7px;border-radius:50%;background:#f39c12;opacity:0;flex-shrink:0;transition:opacity 0.3s;}
+.unsaved-indicator.visible{opacity:1;animation:unsaved-pulse 2s ease infinite;}
+@keyframes unsaved-pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+
+/* ── REPORT ── */
+.report-overlay{position:fixed;inset:0;background:#e8edf2;z-index:300;display:none;overflow-y:auto;}
+.report-overlay.open{display:block;}
+.report-close-bar{position:sticky;top:0;background:var(--navy);padding:10px 24px;display:flex;align-items:center;gap:12px;z-index:10;}
+.report-close-bar span.bar-label{color:rgba(255,255,255,0.7);font-size:12px;font-weight:500;}
+.report{max-width:820px;margin:32px auto;background:var(--white);padding:56px 64px;box-shadow:0 2px 20px rgba(28,43,58,0.1);border-radius:2px;}
+.report .doc-header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:24px;margin-bottom:40px;border-bottom:1.5px solid var(--navy);}
+.report .doc-eyebrow{font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:6px;}
+.report .doc-title{font-size:24px;font-weight:300;color:var(--ink);}
+.report .doc-title strong{font-weight:700;color:var(--navy);}
+.report .doc-meta{text-align:right;font-size:11px;color:var(--steel);line-height:1.6;}
+.report .chapter{margin-bottom:40px;}
+.report .chapter-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.report .chapter-number{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--blue);text-transform:uppercase;}
+.report .chapter-title{font-size:12px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--navy);}
+.report .chapter-line{flex:1;height:1px;background:linear-gradient(to right,var(--haze),transparent);}
+.report .entity-block{margin-bottom:28px;border:1px solid var(--frost);border-radius:5px;overflow:hidden;}
+.report .entity-block-header{display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--ghost);border-bottom:1px solid var(--ice);}
+.report .entity-block-color{width:5px;height:20px;border-radius:2px;}
+.report .entity-block-name{font-size:13px;font-weight:700;color:var(--navy);}
+.report .entity-block-notes{padding:10px 18px;font-size:12px;color:var(--slate);background:var(--mist);border-bottom:1px solid var(--ice);font-style:italic;}
+.report table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.report thead tr{background:var(--navy);}
+.report thead th{padding:8px 14px;text-align:left;color:#fff;font-weight:600;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;}
+.report tbody tr{border-bottom:1px solid var(--ice);}
+.report tbody tr:nth-child(even){background:#f7fbfd;}
+.report tbody td{padding:7px 14px;color:var(--slate);vertical-align:middle;}
+.report .doc-footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--frost);display:flex;justify-content:space-between;font-size:10.5px;color:var(--haze);}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--ink);color:#fff;padding:10px 18px;border-radius:5px;font-size:12px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.2);animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;}
+.toast .material-icons-outlined{font-size:16px;}
+.toast.success .material-icons-outlined{color:#27ae60;}
+.toast.error .material-icons-outlined{color:#e74c3c;}
+.toast.info .material-icons-outlined{color:var(--blue);}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── EMPTY ── */
+.canvas-empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:5;}
+.canvas-empty .material-icons-outlined{font-size:48px;color:var(--haze);margin-bottom:12px;}
+.canvas-empty h3{font-size:15px;font-weight:600;color:var(--steel);margin-bottom:6px;}
+.canvas-empty p{font-size:12px;color:var(--haze);}
+
+/* ── CONTEXT MENU ── */
+.ctx-menu{position:fixed;background:var(--white);border:1px solid var(--frost);border-radius:5px;box-shadow:0 4px 16px rgba(28,43,58,0.12);padding:4px 0;z-index:150;display:none;min-width:160px;}
+.ctx-menu.open{display:block;}
+.ctx-item{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:12px;color:var(--slate);cursor:pointer;transition:all var(--trans);}
+.ctx-item:hover{background:var(--mist);color:var(--navy);}
+.ctx-item.danger{color:var(--red);}.ctx-item.danger:hover{background:var(--tag-red-bg);}
+.ctx-item .material-icons-outlined{font-size:16px;}
+.ctx-sep{height:1px;background:var(--ice);margin:4px 0;}
+
+/* ── PRINT ── */
+@media print{
+  body{background:#fff;overflow:visible;height:auto;}
+  .topbar,.left-panel,.canvas-area,.right-panel,.zoom-indicator,.toast-container,.report-close-bar,.modal-overlay,.ctx-menu{display:none!important;}
+  .report-overlay{position:static;background:none;display:block!important;overflow:visible;}
+  .report{box-shadow:none;margin:0;padding:40px 48px;max-width:none;}
+  .report .entity-block{break-inside:avoid;}
+}
+#fileInput{display:none;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="topbar-btn" onclick="toggleLeftPanel()" title="Ocultar/Mostrar painel esquerdo"><span class="material-icons-outlined">menu</span></button>
+  <div class="topbar-brand"><strong>Polaris</strong> Data Architect</div>
+  <div class="topbar-sep"></div>
+  <input type="text" class="topbar-project-name" id="projectName" placeholder="Nome do projeto..." value="Novo Projeto">
+  <span class="unsaved-indicator" id="unsavedIndicator" title="Alterações não salvas"></span>
+  <div class="topbar-spacer"></div>
+  <button class="topbar-btn" onclick="newProject()" title="Novo projeto"><span class="material-icons-outlined">note_add</span>Novo</button>
+  <button class="topbar-btn" onclick="importProject()" title="Importar JSON"><span class="material-icons-outlined">file_upload</span>Importar</button>
+  <button class="topbar-btn" onclick="exportProject()" title="Exportar JSON"><span class="material-icons-outlined">file_download</span>Exportar</button>
+  <div class="topbar-sep"></div>
+  <button class="topbar-btn" onclick="showDDL()" title="Gerar SQL DDL"><span class="material-icons-outlined">code</span>SQL</button>
+  <button class="topbar-btn primary" onclick="showReport()" title="Visualizar relatório"><span class="material-icons-outlined">description</span>Relatório</button>
+  <div class="topbar-sep"></div>
+  <button class="topbar-btn" onclick="showHelp()" title="Ajuda"><span class="material-icons-outlined">help_outline</span>Ajuda</button>
+</div>
+
+<div class="left-panel">
+  <div class="resize-handle left-resize" id="leftResize"></div>
+  <div class="lp-section">
+    <div class="lp-section-label">Ações</div>
+    <button class="lp-btn" onclick="addEntity()"><span class="material-icons-outlined">add_box</span>Nova Entidade</button>
+    <button class="lp-btn" onclick="openRelModal()"><span class="material-icons-outlined">link</span>Novo Relacionamento</button>
+    <button class="lp-btn" onclick="addGroup()"><span class="material-icons-outlined">folder_special</span>Novo Grupo</button>
+    <button class="lp-btn" onclick="autoLayout()"><span class="material-icons-outlined">auto_fix_high</span>Auto Layout</button>
+    <button class="lp-btn" onclick="undo()" title="Ctrl+Z"><span class="material-icons-outlined">undo</span>Desfazer</button>
+    <button class="lp-btn" onclick="redo()" title="Ctrl+Y"><span class="material-icons-outlined">redo</span>Refazer</button>
+  </div>
+  <div class="lp-section" style="padding-bottom:10px;"><div class="lp-section-label">Entidades</div></div>
+  <div class="lp-entity-list" id="entityList">
+    <div class="lp-empty" id="entityListEmpty"><span class="material-icons-outlined">storage</span>Nenhuma entidade criada.<br>Clique em "Nova Entidade" para começar.</div>
+  </div>
+</div>
+
+<div class="canvas-area" id="canvasArea">
+  <div class="canvas-viewport" id="canvasViewport">
+    <svg class="canvas-svg" id="canvasSvg">
+      <defs><marker id="arrowEnd" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--haze)"/></marker></defs>
+    </svg>
+  </div>
+  <div class="canvas-empty" id="canvasEmpty"><span class="material-icons-outlined">hub</span><h3>Seu modelo de dados</h3><p>Adicione entidades para começar a modelagem</p></div>
+</div>
+
+<div class="zoom-indicator">
+  <button class="zoom-btn" onclick="zoomBy(-0.1)"><span class="material-icons-outlined">remove</span></button>
+  <span id="zoomLevel">100%</span>
+  <button class="zoom-btn" onclick="zoomBy(0.1)"><span class="material-icons-outlined">add</span></button>
+  <button class="zoom-btn" onclick="resetZoom()" title="Reset"><span class="material-icons-outlined">fit_screen</span></button>
+</div>
+
+<div class="right-panel" id="rightPanel">
+  <div class="resize-handle right-resize" id="rightResize"></div>
+  <div class="rp-header">
+    <div class="rp-header-color" id="rpHeaderColor"></div>
+    <div class="rp-title" id="rpTitle">Entidade</div>
+    <button class="rp-close" onclick="closeRightPanel()"><span class="material-icons-outlined">close</span></button>
+  </div>
+  <div class="rp-body" id="rpBody"></div>
+  <div class="rp-footer">
+    <button class="rp-footer-btn danger" onclick="deleteSelectedEntity()"><span class="material-icons-outlined">delete_outline</span>Excluir Entidade</button>
+  </div>
+</div>
+
+<!-- Relationship Modal -->
+<div class="modal-overlay" id="relModal">
+  <div class="modal rel-modal">
+    <div class="modal-header">
+      <span class="material-icons-outlined" style="color:var(--blue);font-size:20px;">link</span>
+      <div class="modal-title" id="relModalTitle">Novo Relacionamento</div>
+      <button class="rp-close" onclick="closeRelModal()"><span class="material-icons-outlined">close</span></button>
+    </div>
+    <div class="modal-body" id="relModalBody"></div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeRelModal()">Cancelar</button>
+      <button class="modal-btn primary" onclick="saveRelationship()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DDL Modal -->
+<div class="modal-overlay" id="ddlModal">
+  <div class="modal ddl-modal">
+    <div class="modal-header">
+      <span class="material-icons-outlined" style="color:var(--blue);font-size:20px;">code</span>
+      <div class="modal-title">SQL DDL — CREATE TABLE</div>
+      <button class="rp-close" onclick="closeDDL()"><span class="material-icons-outlined">close</span></button>
+    </div>
+    <div class="modal-body"><pre class="ddl-pre" id="ddlContent"></pre></div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeDDL()">Fechar</button>
+      <button class="modal-btn primary" onclick="copyDDL()"><span class="material-icons-outlined" style="font-size:15px;">content_copy</span>Copiar SQL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">
+      <span class="material-icons-outlined" style="color:var(--red);font-size:20px;">warning_amber</span>
+      <div class="modal-title" id="confirmTitle">Confirmar</div>
+    </div>
+    <div class="modal-body"><p id="confirmMsg" style="color:var(--slate);font-size:13px;"></p></div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeConfirm()">Cancelar</button>
+      <button class="modal-btn danger" id="confirmBtn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Group Modal -->
+<div class="modal-overlay" id="groupModal">
+  <div class="modal group-modal">
+    <div class="modal-header">
+      <span class="material-icons-outlined" style="color:var(--blue);font-size:20px;">folder_special</span>
+      <div class="modal-title" id="groupModalTitle">Novo Grupo</div>
+      <button class="rp-close" onclick="closeGroupModal()"><span class="material-icons-outlined">close</span></button>
+    </div>
+    <div class="modal-body" id="groupModalBody"></div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeGroupModal()">Cancelar</button>
+      <button class="modal-btn primary" onclick="saveGroup()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal help-modal">
+    <div class="modal-header">
+      <span class="material-icons-outlined" style="color:var(--blue);font-size:20px;">help_outline</span>
+      <div class="modal-title">Ajuda — Polaris Data Architect</div>
+      <button class="rp-close" onclick="closeHelp()"><span class="material-icons-outlined">close</span></button>
+    </div>
+    <div class="modal-body" id="helpModalBody"></div>
+    <div class="modal-footer">
+      <button class="modal-btn primary" onclick="closeHelp()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report -->
+<div class="report-overlay" id="reportOverlay">
+  <div class="report-close-bar">
+    <button class="topbar-btn" onclick="closeReport()"><span class="material-icons-outlined">arrow_back</span>Voltar</button>
+    <span class="bar-label">Visualização de Relatório</span>
+    <div class="topbar-spacer"></div>
+    <button class="topbar-btn primary" onclick="window.print()"><span class="material-icons-outlined">print</span>Imprimir / PDF</button>
+  </div>
+  <div class="report" id="reportContent"></div>
+</div>
+
+<div class="ctx-menu" id="ctxMenu"></div>
+<div class="toast-container" id="toastContainer"></div>
+<input type="file" id="fileInput" accept=".json">
+
+<script>
+// ═══════════════════════════════════════
+// POLARIS DATA ARCHITECT — APP
+// ═══════════════════════════════════════
+
+let state = { project:{name:'Novo Projeto',createdAt:new Date().toISOString()}, entities:[], relationships:[], groups:[] };
+let selectedEntityId = null, editingRelId = null, editingGroupId = null;
+let undoStack = [], redoStack = [];
+let zoom = 1, panX = 0, panY = 0, isPanning = false, panStart = {x:0,y:0};
+let dragEntity = null, dragOffset = {x:0,y:0}, dragMoved = false;
+let expandedCards = new Set(); // entities expanded on canvas
+let selectedGroupColor = '#1b4f72';
+let _dragFieldId = null, _dragEntityId = null;
+let hasUnsavedChanges = false;
+
+const SQL_TYPES = [
+  'Integer','BigInteger','SmallInteger',
+  'String(255)','String(100)','String(50)','String(36)',
+  'Text','Float','Numeric(10,2)','Boolean',
+  'Date','DateTime','Time',
+  'JSON','LargeBinary','UUID','AutoString','Enum'
+];
+
+const TYPE_TO_SQL = {
+  'Integer':'INT','BigInteger':'BIGINT','SmallInteger':'SMALLINT',
+  'String(255)':'VARCHAR(255)','String(100)':'VARCHAR(100)',
+  'String(50)':'VARCHAR(50)','String(36)':'CHAR(36)',
+  'Text':'TEXT','Float':'FLOAT','Numeric(10,2)':'DECIMAL(10,2)',
+  'Boolean':'BOOLEAN','Date':'DATE','DateTime':'DATETIME','Time':'TIME',
+  'JSON':'JSON','LargeBinary':'BLOB','UUID':'CHAR(36)',
+  'AutoString':'VARCHAR(255)','Enum':'VARCHAR(100)'
+};
+
+const ENTITY_COLORS = ['#1b4f72','#2e86c1','#1a5276','#2874a6','#148f77','#1e8449','#1d8348','#117a65','#7d3c98','#6c3483','#884ea0','#c0392b','#922b21','#a93226','#d4a017','#b7950b','#af601a','#2c3e50','#566573','#707b7c'];
+
+function uid(){return 'id_'+Math.random().toString(36).substr(2,9)+Date.now().toString(36);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function hexToRgba(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;}
+
+function toast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const icons={success:'check_circle',error:'error',info:'info'};
+  const t=document.createElement('div');t.className=`toast ${type}`;
+  t.innerHTML=`<span class="material-icons-outlined">${icons[type]}</span>${msg}`;
+  c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},3000);
+}
+
+function confirm2(title,msg,onOk){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  document.getElementById('confirmBtn').onclick=()=>{onOk();closeConfirm();};
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('open');}
+
+// ── UNDO/REDO ──
+function markDirty(){hasUnsavedChanges=true;document.getElementById('unsavedIndicator').classList.add('visible');}
+function markClean(){hasUnsavedChanges=false;document.getElementById('unsavedIndicator').classList.remove('visible');}
+function pushUndo(){undoStack.push(JSON.stringify(state));if(undoStack.length>50)undoStack.shift();redoStack=[];markDirty();}
+function dragFieldStart(e,entityId,fieldId){_dragFieldId=fieldId;_dragEntityId=entityId;e.dataTransfer.effectAllowed='move';setTimeout(()=>document.getElementById('fc_'+fieldId)?.style.setProperty('opacity','0.4'),0);}
+function dragFieldOver(e,targetFieldId){e.preventDefault();e.dataTransfer.dropEffect='move';document.querySelectorAll('.rp-field-card').forEach(c=>c.classList.remove('drag-over'));if(targetFieldId!==_dragFieldId)document.getElementById('fc_'+targetFieldId)?.classList.add('drag-over');}
+function dragFieldDrop(e,entityId,targetFieldId){e.preventDefault();if(!_dragFieldId||_dragFieldId===targetFieldId||_dragEntityId!==entityId)return;const ent=state.entities.find(x=>x.id===entityId);if(!ent)return;pushUndo();const fromIdx=ent.fields.findIndex(f=>f.id===_dragFieldId);const toIdx=ent.fields.findIndex(f=>f.id===targetFieldId);if(fromIdx<0||toIdx<0)return;const [field]=ent.fields.splice(fromIdx,1);ent.fields.splice(toIdx,0,field);renderAll();renderRightPanel();}
+function dragFieldEnd(e){document.querySelectorAll('.rp-field-card').forEach(c=>{c.classList.remove('drag-over');c.style.opacity='';});_dragFieldId=null;_dragEntityId=null;}
+function undo(){if(!undoStack.length)return;redoStack.push(JSON.stringify(state));state=JSON.parse(undoStack.pop());document.getElementById('projectName').value=state.project.name;if(!state.groups)state.groups=[];selectedEntityId=null;closeRightPanel();renderAll();toast('Ação desfeita','info');}
+function redo(){if(!redoStack.length)return;undoStack.push(JSON.stringify(state));state=JSON.parse(redoStack.pop());document.getElementById('projectName').value=state.project.name;if(!state.groups)state.groups=[];selectedEntityId=null;closeRightPanel();renderAll();toast('Ação refeita','info');}
+
+// ── VALIDATION ──
+function validateAll(){
+  const errors=[];
+  state.relationships.forEach(r=>{
+    const fe=state.entities.find(e=>e.id===r.fromEntity),te=state.entities.find(e=>e.id===r.toEntity);
+    if(!fe)errors.push({relId:r.id,msg:'Rel. referencia entidade de origem inexistente'});
+    if(!te)errors.push({relId:r.id,msg:'Rel. referencia entidade de destino inexistente'});
+    if(fe&&!fe.fields.find(f=>f.id===r.fromField))errors.push({relId:r.id,entityId:fe.id,msg:`Campo FK inexistente em ${fe.name}`});
+    if(te&&!te.fields.find(f=>f.id===r.toField))errors.push({relId:r.id,entityId:te.id,msg:`Campo referenciado inexistente em ${te.name}`});
+  });
+  return errors;
+}
+
+// ── PROJECT ──
+function newProject(){confirm2('Novo Projeto','Criar um novo projeto irá descartar o atual. Continuar?',()=>{pushUndo();state={project:{name:'Novo Projeto',createdAt:new Date().toISOString()},entities:[],relationships:[],groups:[]};document.getElementById('projectName').value=state.project.name;selectedEntityId=null;expandedCards.clear();closeRightPanel();zoom=1;panX=0;panY=0;updateViewport();renderAll();toast('Novo projeto criado','success');markClean();});}
+
+function exportProject(){
+  state.project.name=document.getElementById('projectName').value||'Novo Projeto';
+  state.project.exportedAt=new Date().toISOString();
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(state.project.name.replace(/\s+/g,'_').toLowerCase()||'polaris-data')+'.json';
+  a.click();URL.revokeObjectURL(a.href);toast('Projeto exportado','success');markClean();
+}
+
+function importProject(){document.getElementById('fileInput').click();}
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!data.entities||!data.relationships)throw new Error('Formato inválido');pushUndo();state=data;if(!state.project)state.project={name:'Importado',createdAt:new Date().toISOString()};if(!state.groups)state.groups=[];document.getElementById('projectName').value=state.project.name;selectedEntityId=null;expandedCards.clear();closeRightPanel();renderAll();toast('Projeto importado','success');markClean();}catch(err){toast('Erro: '+err.message,'error');}};
+  reader.readAsText(file);e.target.value='';
+});
+document.getElementById('projectName').addEventListener('input',e=>{state.project.name=e.target.value;});
+
+// ── ENTITY ──
+function addEntity(){
+  pushUndo();
+  const rect=document.getElementById('canvasArea').getBoundingClientRect();
+  const cx=(rect.width/2-panX)/zoom, cy=(rect.height/2-panY)/zoom;
+  const e={id:uid(),name:'nova_entidade',color:ENTITY_COLORS[state.entities.length%ENTITY_COLORS.length],notes:'',
+    x:cx-100+Math.random()*60-30, y:cy-60+Math.random()*60-30,
+    fields:[{id:uid(),name:'id',type:'Integer',primaryKey:true,autoIncrement:true,nullable:false,unique:false,index:false,default:''}]};
+  state.entities.push(e);renderAll();selectEntity(e.id);toast('Entidade criada','success');
+}
+
+function deleteEntity(id){confirm2('Excluir Entidade','Isso removerá a entidade e seus relacionamentos. Continuar?',()=>{pushUndo();state.entities=state.entities.filter(e=>e.id!==id);state.relationships=state.relationships.filter(r=>r.fromEntity!==id&&r.toEntity!==id);state.groups.forEach(g=>{g.entityIds=g.entityIds.filter(eid=>eid!==id);});expandedCards.delete(id);if(selectedEntityId===id){selectedEntityId=null;closeRightPanel();}renderAll();toast('Entidade excluída','success');});}
+function deleteSelectedEntity(){if(selectedEntityId)deleteEntity(selectedEntityId);}
+
+function duplicateEntity(id){
+  const src=state.entities.find(e=>e.id===id);if(!src)return;pushUndo();
+  const dup=JSON.parse(JSON.stringify(src));dup.id=uid();dup.name=src.name+'_copia';dup.x+=40;dup.y+=40;dup.fields.forEach(f=>f.id=uid());
+  state.entities.push(dup);renderAll();toast('Entidade duplicada','success');
+}
+
+// ── FIELDS ──
+function addField(entityId){pushUndo();const e=state.entities.find(x=>x.id===entityId);if(!e)return;e.fields.push({id:uid(),name:'novo_campo',type:'String(255)',primaryKey:false,autoIncrement:false,nullable:true,unique:false,index:false,default:''});renderAll();renderRightPanel();}
+
+function deleteField(entityId,fieldId){pushUndo();const e=state.entities.find(x=>x.id===entityId);if(!e)return;e.fields=e.fields.filter(f=>f.id!==fieldId);state.relationships=state.relationships.filter(r=>!((r.fromEntity===entityId&&r.fromField===fieldId)||(r.toEntity===entityId&&r.toField===fieldId)));renderAll();renderRightPanel();}
+
+function moveField(entityId,fieldId,dir){pushUndo();const e=state.entities.find(x=>x.id===entityId);if(!e)return;const idx=e.fields.findIndex(f=>f.id===fieldId);const ni=idx+dir;if(ni<0||ni>=e.fields.length)return;[e.fields[idx],e.fields[ni]]=[e.fields[ni],e.fields[idx]];renderAll();renderRightPanel();}
+
+function updateEntity(id,key,value){pushUndo();const e=state.entities.find(x=>x.id===id);if(e){e[key]=value;renderAll();renderRightPanel();}}
+function updateField(entityId,fieldId,key,value){pushUndo();const e=state.entities.find(x=>x.id===entityId);if(!e)return;const f=e.fields.find(x=>x.id===fieldId);if(f){f[key]=value;renderAll();renderRightPanel();}}
+
+// ── GROUPS ──
+function addGroup(){openGroupModal(null);}
+
+function openGroupModal(groupId){
+  editingGroupId=groupId||null;
+  const g=groupId?state.groups.find(x=>x.id===groupId):null;
+  selectedGroupColor=g?.color||ENTITY_COLORS[0];
+  document.getElementById('groupModalTitle').textContent=g?'Editar Grupo':'Novo Grupo';
+  document.getElementById('groupModalBody').innerHTML=`
+    <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Nome do Grupo</label>
+    <input class="rp-input" id="groupNameInput" value="${esc(g?.name||'')}" placeholder="Ex: Domínio de Usuários..." autofocus></div></div>
+    <div class="rp-row" style="margin-top:10px;"><div class="rp-input-group"><label class="rp-label">Cor</label>
+    <div class="rp-color-grid">${ENTITY_COLORS.map(c=>`<div class="rp-color-swatch ${c===selectedGroupColor?'active':''}" style="background:${c}" data-color="${c}" onclick="setGroupColor('${c}')"></div>`).join('')}</div></div></div>`;
+  document.getElementById('groupModal').classList.add('open');
+  setTimeout(()=>document.getElementById('groupNameInput')?.focus(),50);
+}
+
+function setGroupColor(c){
+  selectedGroupColor=c;
+  document.querySelectorAll('#groupModal .rp-color-swatch').forEach(s=>s.classList.toggle('active',s.dataset.color===c));
+}
+
+function saveGroup(){
+  const name=(document.getElementById('groupNameInput').value||'').trim();
+  if(!name){toast('Nome obrigatório','error');return;}
+  pushUndo();
+  if(editingGroupId){const g=state.groups.find(x=>x.id===editingGroupId);if(g){g.name=name;g.color=selectedGroupColor;}}
+  else{state.groups.push({id:uid(),name,color:selectedGroupColor,entityIds:[]});}
+  closeGroupModal();renderAll();toast(editingGroupId?'Grupo atualizado':'Grupo criado','success');
+}
+
+function closeGroupModal(){document.getElementById('groupModal').classList.remove('open');editingGroupId=null;}
+
+function deleteGroup(id){confirm2('Excluir Grupo','As entidades do grupo não serão excluídas, apenas desassociadas. Continuar?',()=>{pushUndo();state.groups=state.groups.filter(g=>g.id!==id);renderAll();if(selectedEntityId)renderRightPanel();toast('Grupo excluído','success');});}
+
+function updateEntityGroup(entityId,groupId){
+  pushUndo();
+  state.groups.forEach(g=>{g.entityIds=g.entityIds.filter(id=>id!==entityId);});
+  if(groupId){const g=state.groups.find(x=>x.id===groupId);if(g&&!g.entityIds.includes(entityId))g.entityIds.push(entityId);}
+  renderAll();renderRightPanel();
+}
+
+// ── RELATIONSHIPS ──
+function openRelModal(relId){
+  editingRelId=relId||null;
+  const rel=relId?state.relationships.find(r=>r.id===relId):null;
+  document.getElementById('relModalTitle').textContent=rel?'Editar Relacionamento':'Novo Relacionamento';
+  if(!state.entities.length){toast('Crie entidades primeiro','error');return;}
+  const entOpts=state.entities.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+  document.getElementById('relModalBody').innerHTML=`
+    <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Entidade de origem</label><select class="rp-select" id="relFrom" onchange="updateRelFields()">${entOpts}</select></div>
+    <div class="rp-input-group"><label class="rp-label">Campo (FK)</label><select class="rp-select" id="relFromField"></select></div></div>
+    <div style="text-align:center;padding:6px 0;"><span class="material-icons-outlined" style="color:var(--haze);font-size:20px;">arrow_downward</span></div>
+    <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Entidade de destino</label><select class="rp-select" id="relTo" onchange="updateRelFields()">${entOpts}</select></div>
+    <div class="rp-input-group"><label class="rp-label">Campo referenciado</label><select class="rp-select" id="relToField"></select></div></div>
+    <div class="rp-row" style="margin-top:8px;"><div class="rp-input-group"><label class="rp-label">Tipo</label><select class="rp-select" id="relType"><option value="1:1">1:1 — Um para Um</option><option value="1:N" selected>1:N — Um para Muitos</option><option value="N:M">N:M — Muitos para Muitos</option></select></div>
+    <div class="rp-input-group"><label class="rp-label">Label (opcional)</label><input class="rp-input" id="relLabel" placeholder="Ex: pertence a"></div></div>`;
+  if(rel){document.getElementById('relFrom').value=rel.fromEntity;document.getElementById('relTo').value=rel.toEntity;document.getElementById('relType').value=rel.type;document.getElementById('relLabel').value=rel.label||'';}
+  updateRelFields();
+  if(rel)setTimeout(()=>{document.getElementById('relFromField').value=rel.fromField;document.getElementById('relToField').value=rel.toField;},10);
+  document.getElementById('relModal').classList.add('open');
+}
+
+function updateRelFields(){
+  const fromE=state.entities.find(e=>e.id===document.getElementById('relFrom').value);
+  const toE=state.entities.find(e=>e.id===document.getElementById('relTo').value);
+  document.getElementById('relFromField').innerHTML=fromE?fromE.fields.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join(''):'';
+  document.getElementById('relToField').innerHTML=toE?toE.fields.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join(''):'';
+}
+
+function saveRelationship(){
+  const d={fromEntity:document.getElementById('relFrom').value,toEntity:document.getElementById('relTo').value,fromField:document.getElementById('relFromField').value,toField:document.getElementById('relToField').value,type:document.getElementById('relType').value,label:document.getElementById('relLabel').value.trim()};
+  if(!d.fromEntity||!d.toEntity||!d.fromField||!d.toField){toast('Preencha todos os campos','error');return;}
+  pushUndo();
+  if(editingRelId){const rel=state.relationships.find(r=>r.id===editingRelId);if(rel)Object.assign(rel,d);}
+  else state.relationships.push({id:uid(),...d});
+  closeRelModal();renderAll();toast(editingRelId?'Relacionamento atualizado':'Relacionamento criado','success');
+}
+function closeRelModal(){document.getElementById('relModal').classList.remove('open');editingRelId=null;}
+function deleteRelationship(id){confirm2('Excluir Relacionamento','Deseja remover este relacionamento?',()=>{pushUndo();state.relationships=state.relationships.filter(r=>r.id!==id);renderAll();if(selectedEntityId)renderRightPanel();toast('Relacionamento excluído','success');});}
+
+// ── SELECTION & PANELS ──
+function selectEntity(id){selectedEntityId=id;renderEntityList();renderCanvas();openRightPanel();}
+function openRightPanel(){if(!selectedEntityId)return;document.getElementById('rightPanel').classList.add('open');document.getElementById('canvasArea').classList.add('rpopen');renderRightPanel();}
+function closeRightPanel(){document.getElementById('rightPanel').classList.remove('open');document.getElementById('canvasArea').classList.remove('rpopen');selectedEntityId=null;renderEntityList();renderCanvas();}
+
+function renderRightPanel(){
+  const e=state.entities.find(x=>x.id===selectedEntityId);if(!e)return;
+
+  // ── Preserve expanded field card state ──
+  const expandedFields=new Set([...document.querySelectorAll('.rp-field-card.expanded')].map(el=>el.id.replace('fc_','')));
+
+  document.getElementById('rpHeaderColor').style.background=e.color;
+  document.getElementById('rpTitle').textContent=e.name;
+  const isFk=fid=>state.relationships.some(r=>r.fromEntity===e.id&&r.fromField===fid);
+  const isRef=fid=>state.relationships.some(r=>r.toEntity===e.id&&r.toField===fid);
+  const currentGroup=state.groups.find(g=>g.entityIds.includes(e.id));
+
+  let h=`<div class="rp-section"><div class="rp-section-label">Geral</div>
+    <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Nome da Entidade</label><input class="rp-input" value="${esc(e.name)}" onchange="updateEntity('${e.id}','name',this.value)"></div></div>
+    <div class="rp-row" style="margin-top:10px;"><div class="rp-input-group"><label class="rp-label">Cor</label><div class="rp-color-grid">${ENTITY_COLORS.map(c=>`<div class="rp-color-swatch ${c===e.color?'active':''}" style="background:${c}" onclick="updateEntity('${e.id}','color','${c}')"></div>`).join('')}</div></div></div>
+    <div class="rp-row" style="margin-top:10px;"><div class="rp-input-group"><label class="rp-label">Notas</label><textarea class="rp-textarea" placeholder="Documentação..." onchange="updateEntity('${e.id}','notes',this.value)">${esc(e.notes)}</textarea></div></div>`;
+
+  if(state.groups.length){
+    h+=`<div class="rp-row" style="margin-top:10px;"><div class="rp-input-group"><label class="rp-label">Grupo</label>
+      <select class="rp-select" onchange="updateEntityGroup('${e.id}',this.value)">
+        <option value="">— Nenhum —</option>
+        ${state.groups.map(g=>`<option value="${g.id}" ${g.id===currentGroup?.id?'selected':''}>${esc(g.name)}</option>`).join('')}
+      </select></div></div>`;
+  }
+  h+=`</div>`;
+
+  h+=`<div class="rp-section"><div class="rp-section-label">Campos (${e.fields.length})</div>`;
+  e.fields.forEach((f,idx)=>{
+    const badges=[];
+    if(f.primaryKey)badges.push('<span class="rp-field-badge pk">PK</span>');
+    if(isFk(f.id))badges.push('<span class="rp-field-badge fk">FK</span>');
+    if(isRef(f.id))badges.push('<span class="rp-field-badge ref">REF</span>');
+    if(f.unique)badges.push('<span class="rp-field-badge uq">UQ</span>');
+    if(f.index)badges.push('<span class="rp-field-badge idx">IDX</span>');
+    if(!f.nullable)badges.push('<span class="rp-field-badge nn">NN</span>');
+    h+=`<div class="rp-field-card" id="fc_${f.id}" draggable="true" ondragstart="dragFieldStart(event,'${e.id}','${f.id}')" ondragover="dragFieldOver(event,'${f.id}')" ondrop="dragFieldDrop(event,'${e.id}','${f.id}')" ondragend="dragFieldEnd(event)"><div class="rp-field-card-header" onclick="toggleFieldCard('${f.id}')">
+      <span class="rp-drag-handle" onclick="event.stopPropagation()"><span class="material-icons-outlined">drag_indicator</span></span>
+      <span class="rp-field-card-name">${esc(f.name)}</span><span class="rp-field-card-type">${esc(f.type)}</span>
+      <div class="rp-field-card-badges">${badges.join('')}</div>
+      <div class="rp-field-card-actions">
+        ${idx>0?`<button class="rp-field-action" onclick="event.stopPropagation();moveField('${e.id}','${f.id}',-1)" title="Mover cima"><span class="material-icons-outlined">expand_less</span></button>`:''}
+        ${idx<e.fields.length-1?`<button class="rp-field-action" onclick="event.stopPropagation();moveField('${e.id}','${f.id}',1)" title="Mover baixo"><span class="material-icons-outlined">expand_more</span></button>`:''}
+        <button class="rp-field-action delete" onclick="event.stopPropagation();deleteField('${e.id}','${f.id}')" title="Excluir"><span class="material-icons-outlined">close</span></button>
+      </div></div>
+      <div class="rp-field-card-body">
+        <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Nome</label><input class="rp-input" value="${esc(f.name)}" onchange="updateField('${e.id}','${f.id}','name',this.value)"></div>
+        <div class="rp-input-group"><label class="rp-label">Tipo</label><select class="rp-select" onchange="updateField('${e.id}','${f.id}','type',this.value)">${SQL_TYPES.map(t=>`<option ${t===f.type?'selected':''}>${t}</option>`).join('')}</select></div></div>
+        <div class="rp-row" style="margin-top:8px;"><div class="rp-input-group"><label class="rp-label">Valor padrão</label><input class="rp-input" value="${esc(f.default||'')}" onchange="updateField('${e.id}','${f.id}','default',this.value)" placeholder="NULL"></div></div>
+        <div class="rp-row" style="margin-top:10px;flex-wrap:wrap;gap:12px;">
+          <label class="rp-check-row"><input type="checkbox" ${f.primaryKey?'checked':''} onchange="updateField('${e.id}','${f.id}','primaryKey',this.checked)">Primary Key</label>
+          <label class="rp-check-row"><input type="checkbox" ${f.autoIncrement?'checked':''} onchange="updateField('${e.id}','${f.id}','autoIncrement',this.checked)">Auto Increment</label>
+          <label class="rp-check-row"><input type="checkbox" ${f.nullable?'checked':''} onchange="updateField('${e.id}','${f.id}','nullable',this.checked)">Nullable</label>
+          <label class="rp-check-row"><input type="checkbox" ${f.unique?'checked':''} onchange="updateField('${e.id}','${f.id}','unique',this.checked)">Unique</label>
+          <label class="rp-check-row"><input type="checkbox" ${f.index?'checked':''} onchange="updateField('${e.id}','${f.id}','index',this.checked)">Index</label>
+        </div>
+      </div></div>`;
+  });
+  h+=`<button class="rp-add-btn" onclick="addField('${e.id}')"><span class="material-icons-outlined">add</span>Adicionar Campo</button></div>`;
+
+  const rels=state.relationships.filter(r=>r.fromEntity===e.id||r.toEntity===e.id);
+  if(rels.length){
+    h+=`<div class="rp-section"><div class="rp-section-label">Relacionamentos (${rels.length})</div>`;
+    rels.forEach(r=>{
+      const other=r.fromEntity===e.id?state.entities.find(x=>x.id===r.toEntity):state.entities.find(x=>x.id===r.fromEntity);
+      const dir=r.fromEntity===e.id?'→':'←';
+      h+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--ice);">
+        <span style="font-size:11px;font-weight:600;color:var(--navy);flex:1;">${esc(e.name)} ${dir} ${other?esc(other.name):'???'}</span>
+        <span style="font-size:10px;color:var(--steel);font-family:monospace;">${r.type}</span>
+        <button class="rp-field-action" onclick="openRelModal('${r.id}')" title="Editar"><span class="material-icons-outlined">edit</span></button>
+        <button class="rp-field-action delete" onclick="deleteRelationship('${r.id}')" title="Excluir"><span class="material-icons-outlined">close</span></button></div>`;
+    });
+    h+=`</div>`;
+  }
+
+  document.getElementById('rpBody').innerHTML=h;
+
+  // ── Restore expanded field state ──
+  expandedFields.forEach(fid=>{
+    const el=document.getElementById('fc_'+fid);
+    if(el)el.classList.add('expanded');
+  });
+}
+
+function toggleFieldCard(fid){const el=document.getElementById('fc_'+fid);if(el)el.classList.toggle('expanded');}
+
+// ── RENDERING ──
+function renderAll(){renderEntityList();renderCanvas();updateEmptyState();}
+function updateEmptyState(){document.getElementById('canvasEmpty').style.display=state.entities.length?'none':'block';document.getElementById('entityListEmpty').style.display=state.entities.length?'none':'block';}
+
+function renderEntityList(){
+  const list=document.getElementById('entityList');
+  list.querySelectorAll('.lp-entity-item,.lp-group-header,.lp-group-entities,.lp-ungrouped-label').forEach(el=>el.remove());
+
+  // Groups with their entities
+  state.groups.forEach(g=>{
+    const groupEntities=state.entities.filter(e=>g.entityIds.includes(e.id));
+    const hdr=document.createElement('div');hdr.className='lp-group-header';
+    hdr.innerHTML=`<div class="lp-group-dot" style="background:${g.color}"></div>
+      <span class="lp-group-name">${esc(g.name)}</span>
+      <span class="lp-group-count">${groupEntities.length}</span>
+      <div class="lp-group-actions">
+        <button class="lp-group-action" onclick="event.stopPropagation();openGroupModal('${g.id}')" title="Editar grupo"><span class="material-icons-outlined">edit</span></button>
+        <button class="lp-group-action danger" onclick="event.stopPropagation();deleteGroup('${g.id}')" title="Excluir grupo"><span class="material-icons-outlined">delete_outline</span></button>
+      </div>`;
+    list.appendChild(hdr);
+    const entContainer=document.createElement('div');entContainer.className='lp-group-entities';
+    groupEntities.forEach(e=>{
+      const d=document.createElement('div');d.className=`lp-entity-item ${e.id===selectedEntityId?'active':''}`;
+      d.innerHTML=`<div class="lp-entity-dot" style="background:${e.color}"></div>${esc(e.name)}<span class="lp-entity-count">${e.fields.length}</span>`;
+      d.onclick=()=>selectEntity(e.id);d.oncontextmenu=ev=>entityCtxMenu(ev,e.id);
+      entContainer.appendChild(d);
+    });
+    list.appendChild(entContainer);
+  });
+
+  // Ungrouped entities
+  const groupedIds=new Set(state.groups.flatMap(g=>g.entityIds));
+  const ungrouped=state.entities.filter(e=>!groupedIds.has(e.id));
+  if(ungrouped.length){
+    if(state.groups.length){
+      const ul=document.createElement('div');ul.className='lp-ungrouped-label';ul.textContent='Sem grupo';list.appendChild(ul);
+    }
+    ungrouped.forEach(e=>{
+      const d=document.createElement('div');d.className=`lp-entity-item ${e.id===selectedEntityId?'active':''}`;
+      d.innerHTML=`<div class="lp-entity-dot" style="background:${e.color}"></div>${esc(e.name)}<span class="lp-entity-count">${e.fields.length}</span>`;
+      d.onclick=()=>selectEntity(e.id);d.oncontextmenu=ev=>entityCtxMenu(ev,e.id);
+      list.appendChild(d);
+    });
+  }
+}
+
+function renderCanvas(){
+  const vp=document.getElementById('canvasViewport');
+  const svg=document.getElementById('canvasSvg');
+  vp.querySelectorAll('.entity-card,.group-block').forEach(el=>el.remove());
+  const errors=validateAll();
+  const errorEntIds=new Set(errors.map(e=>e.entityId).filter(Boolean));
+
+  state.entities.forEach(e=>{
+    const card=document.createElement('div');
+    card.className=`entity-card ${e.id===selectedEntityId?'selected':''} ${errorEntIds.has(e.id)?'has-error':''}`;
+    card.style.left=e.x+'px';card.style.top=e.y+'px';card.dataset.entityId=e.id;
+    const isFk=fid=>state.relationships.some(r=>r.fromEntity===e.id&&r.fromField===fid);
+    const isRef=fid=>state.relationships.some(r=>r.toEntity===e.id&&r.toField===fid);
+    const isExpanded=expandedCards.has(e.id);
+
+    // Determine fields to show — always include PK, FK and REF fields
+    let shown;
+    if(isExpanded){
+      shown=e.fields;
+    } else {
+      const priority=e.fields.filter(f=>f.primaryKey||isFk(f.id)||isRef(f.id));
+      const others=e.fields.filter(f=>!f.primaryKey&&!isFk(f.id)&&!isRef(f.id));
+      const maxOthers=Math.max(0,6-priority.length);
+      shown=[...priority,...others.slice(0,maxOthers)];
+    }
+    const hiddenCount=isExpanded?0:e.fields.length-shown.length;
+
+    let fh=shown.map(f=>{
+      let icon='remove',cls='';
+      if(f.primaryKey){icon='vpn_key';cls='pk';}else if(isFk(f.id)){icon='link';cls='fk';}else if(isRef(f.id)){icon='call_received';cls='ref';}else if(f.index){icon='bolt';cls='idx';}
+      return `<div class="entity-field-row" data-field-id="${f.id}"><span class="material-icons-outlined entity-field-icon ${cls}" style="font-size:13px;">${icon}</span><span class="entity-field-name">${esc(f.name)}</span><span class="entity-field-type">${esc(f.type)}</span></div>`;
+    }).join('');
+    if(hiddenCount>0)fh+=`<div class="entity-more">+ ${hiddenCount} campo${hiddenCount>1?'s':''}</div>`;
+
+    const toggleIcon=isExpanded?'unfold_less':'unfold_more';
+    const toggleTitle=isExpanded?'Colapsar':'Expandir todos os campos';
+    const showToggle=isExpanded||hiddenCount>0;
+    const toggleBtn=showToggle?`<button class="card-toggle-btn" onclick="toggleCardExpand(event,'${e.id}')" title="${toggleTitle}"><span class="material-icons-outlined">${toggleIcon}</span></button>`:'';
+    card.innerHTML=`<div class="entity-header" data-drag="${e.id}">
+      <div class="entity-color-bar" style="background:${e.color}"></div>
+      <div class="entity-name">${esc(e.name)}</div>
+      <div class="entity-badge">${e.fields.length} col</div>
+      ${toggleBtn}
+    </div><div class="entity-fields">${fh}</div>`;
+    card.addEventListener('click',ev=>{if(!dragMoved)selectEntity(e.id);});
+    card.addEventListener('contextmenu',ev=>{ev.preventDefault();entityCtxMenu(ev,e.id);});
+    vp.appendChild(card);
+  });
+
+  // Group blocks + SVG relationships in rAF (after layout)
+  requestAnimationFrame(()=>{
+    // ── Group blocks ──
+    state.groups.forEach(g=>{
+      const ents=state.entities.filter(e=>g.entityIds.includes(e.id));
+      if(!ents.length)return;
+      let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+      ents.forEach(e=>{
+        const card=vp.querySelector(`[data-entity-id="${e.id}"]`);
+        if(!card)return;
+        minX=Math.min(minX,e.x);minY=Math.min(minY,e.y);
+        maxX=Math.max(maxX,e.x+card.offsetWidth);maxY=Math.max(maxY,e.y+card.offsetHeight);
+      });
+      if(!isFinite(minX))return;
+      const pad=22;
+      const gb=document.createElement('div');gb.className='group-block';
+      gb.style.left=(minX-pad)+'px';gb.style.top=(minY-pad)+'px';
+      gb.style.width=(maxX-minX+pad*2)+'px';gb.style.height=(maxY-minY+pad*2)+'px';
+      gb.style.borderColor=g.color;
+      gb.style.background=hexToRgba(g.color,0.07);
+      gb.innerHTML=`<div class="group-block-label" style="background:${g.color};">${esc(g.name)}</div>`;
+      vp.insertBefore(gb,vp.firstChild);
+    });
+
+    // ── SVG relationships ──
+    const defs='<defs><marker id="arrowEnd" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#aec9dc"/></marker></defs>';
+    let svgC=defs;
+    state.relationships.forEach(r=>{
+      const fromCard=vp.querySelector(`[data-entity-id="${r.fromEntity}"]`);
+      const toCard=vp.querySelector(`[data-entity-id="${r.toEntity}"]`);
+      const fromE=state.entities.find(e=>e.id===r.fromEntity);
+      const toE=state.entities.find(e=>e.id===r.toEntity);
+      if(!fromCard||!toCard||!fromE||!toE)return;
+      const pts=getFieldConnectionPoints(fromCard,fromE,r.fromField,toCard,toE,r.toField);
+      const dx=Math.abs(pts.x2-pts.x1);
+      const offset=Math.max(60,dx*0.45);
+      const cp1x=pts.fromSide==='right'?pts.x1+offset:pts.x1-offset;
+      const cp2x=pts.toSide==='right'?pts.x2+offset:pts.x2-offset;
+      const path=`M${pts.x1},${pts.y1} C${cp1x},${pts.y1} ${cp2x},${pts.y2} ${pts.x2},${pts.y2}`;
+      const mx=(pts.x1+pts.x2)/2,my=(pts.y1+pts.y2)/2;
+      const lbl=r.label||r.type;
+      svgC+=`<g style="pointer-events:all;cursor:pointer;" ondblclick="openRelModal('${r.id}')" oncontextmenu="event.preventDefault();relCtxMenu(event,'${r.id}')">
+        <path d="${path}" class="rel-path" marker-end="url(#arrowEnd)"/>
+        <rect x="${mx-20}" y="${my-16}" width="40" height="14" rx="3" fill="var(--white)" opacity="0.85" style="pointer-events:none;"/>
+        <text x="${mx}" y="${my-6}" text-anchor="middle" class="rel-label">${esc(lbl)}</text></g>`;
+    });
+    svg.innerHTML=svgC;
+  });
+}
+
+function toggleCardExpand(e,id){
+  e.stopPropagation();e.preventDefault();
+  if(expandedCards.has(id))expandedCards.delete(id);else expandedCards.add(id);
+  renderCanvas();
+}
+
+function getFieldConnectionPoints(fromCard,fromE,fromFieldId,toCard,toE,toFieldId){
+  const fromCX=fromE.x+fromCard.offsetWidth/2;
+  const toCX=toE.x+toCard.offsetWidth/2;
+  const fromSide=toCX>fromCX?'right':'left';
+  const toSide=fromCX>toCX?'right':'left';
+  const fromRow=fromCard.querySelector(`[data-field-id="${fromFieldId}"]`);
+  const fromY=fromRow?fromE.y+fromRow.offsetTop+fromRow.offsetHeight/2:fromE.y+fromCard.offsetHeight/2;
+  const fromX=fromSide==='right'?fromE.x+fromCard.offsetWidth:fromE.x;
+  const toRow=toCard.querySelector(`[data-field-id="${toFieldId}"]`);
+  const toY=toRow?toE.y+toRow.offsetTop+toRow.offsetHeight/2:toE.y+toCard.offsetHeight/2;
+  const toX=toSide==='right'?toE.x+toCard.offsetWidth:toE.x;
+  return{x1:fromX,y1:fromY,x2:toX,y2:toY,fromSide,toSide};
+}
+
+// ── DRAG ──
+document.addEventListener('mousedown',e=>{
+  const hdr=e.target.closest('[data-drag]');
+  if(hdr){
+    e.preventDefault();const id=hdr.dataset.drag;const ent=state.entities.find(x=>x.id===id);if(!ent)return;
+    dragEntity=id;dragMoved=false;
+    dragOffset.x=(e.clientX-panX)/zoom-ent.x;dragOffset.y=(e.clientY-panY)/zoom-ent.y;
+  }
+});
+
+// ── PAN & ZOOM ──
+const canvasArea=document.getElementById('canvasArea');
+canvasArea.addEventListener('mousedown',e=>{
+  if((e.target===canvasArea||e.target.id==='canvasViewport'||e.target.closest('.canvas-svg'))&&e.button===0&&!dragEntity){
+    isPanning=true;panStart={x:e.clientX-panX,y:e.clientY-panY};canvasArea.classList.add('grabbing');
+  }
+});
+
+window.addEventListener('mousemove',e=>{
+  if(dragEntity){
+    dragMoved=true;const ent=state.entities.find(x=>x.id===dragEntity);
+    if(ent){ent.x=(e.clientX-panX)/zoom-dragOffset.x;ent.y=(e.clientY-panY)/zoom-dragOffset.y;renderCanvas();}
+    return;
+  }
+  if(isPanning){panX=e.clientX-panStart.x;panY=e.clientY-panStart.y;updateViewport();}
+});
+
+window.addEventListener('mouseup',()=>{
+  if(dragEntity){if(dragMoved)pushUndo();dragEntity=null;setTimeout(()=>dragMoved=false,10);}
+  if(isPanning){isPanning=false;canvasArea.classList.remove('grabbing');}
+});
+
+canvasArea.addEventListener('wheel',e=>{e.preventDefault();const delta=e.deltaY>0?-0.08:0.08;const nz=Math.max(0.2,Math.min(3,zoom+delta));const rect=canvasArea.getBoundingClientRect();const mx=e.clientX-rect.left,my=e.clientY-rect.top;panX=mx-(mx-panX)*(nz/zoom);panY=my-(my-panY)*(nz/zoom);zoom=nz;updateViewport();},{passive:false});
+
+function updateViewport(){
+  document.getElementById('canvasViewport').style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;
+  document.getElementById('zoomLevel').textContent=Math.round(zoom*100)+'%';
+  // Update zoom indicator position based on left panel visibility
+  const lw=document.body.classList.contains('lp-hidden')?0:parseInt(getComputedStyle(document.documentElement).getPropertyValue('--left-w'));
+  document.querySelector('.zoom-indicator').style.left=(lw+16)+'px';
+}
+function zoomBy(d){zoom=Math.max(0.2,Math.min(3,zoom+d));updateViewport();}
+function resetZoom(){zoom=1;panX=0;panY=0;updateViewport();}
+
+// ── TOGGLE LEFT PANEL ──
+function toggleLeftPanel(){
+  document.body.classList.toggle('lp-hidden');
+  // Update canvas-area left manually for smooth transition
+  const isHidden=document.body.classList.contains('lp-hidden');
+  const lw=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--left-w'));
+  canvasArea.style.left=isHidden?'0':(lw+'px');
+  document.querySelector('.zoom-indicator').style.left=isHidden?'16px':((lw+16)+'px');
+}
+
+// ── AUTO LAYOUT ──
+function autoLayout(){
+  if(!state.entities.length)return;pushUndo();
+  const cols=Math.ceil(Math.sqrt(state.entities.length));
+  state.entities.forEach((e,i)=>{e.x=60+(i%cols)*300;e.y=40+Math.floor(i/cols)*260;});
+  panX=0;panY=0;zoom=1;updateViewport();renderAll();toast('Layout reorganizado','success');
+}
+
+// ── CONTEXT MENUS ──
+function entityCtxMenu(e,id){e.preventDefault();e.stopPropagation();const m=document.getElementById('ctxMenu');m.innerHTML=`<div class="ctx-item" onclick="selectEntity('${id}');closeCtx();"><span class="material-icons-outlined">edit</span>Editar</div><div class="ctx-item" onclick="duplicateEntity('${id}');closeCtx();"><span class="material-icons-outlined">content_copy</span>Duplicar</div><div class="ctx-sep"></div><div class="ctx-item danger" onclick="deleteEntity('${id}');closeCtx();"><span class="material-icons-outlined">delete_outline</span>Excluir</div>`;showCtx(e.clientX,e.clientY);}
+function relCtxMenu(e,id){e.preventDefault();e.stopPropagation();const m=document.getElementById('ctxMenu');m.innerHTML=`<div class="ctx-item" onclick="openRelModal('${id}');closeCtx();"><span class="material-icons-outlined">edit</span>Editar</div><div class="ctx-sep"></div><div class="ctx-item danger" onclick="deleteRelationship('${id}');closeCtx();"><span class="material-icons-outlined">delete_outline</span>Excluir</div>`;showCtx(e.clientX,e.clientY);}
+function showCtx(x,y){const m=document.getElementById('ctxMenu');m.style.left=x+'px';m.style.top=y+'px';m.classList.add('open');}
+function closeCtx(){document.getElementById('ctxMenu').classList.remove('open');}
+window.addEventListener('click',closeCtx);
+
+// ── DDL ──
+function showDDL(){
+  if(!state.entities.length){toast('Adicione entidades primeiro','error');return;}
+  let ddl=`-- ═══════════════════════════════════\n-- ${state.project.name||'Polaris Data Model'}\n-- Gerado em: ${new Date().toLocaleString('pt-BR')}\n-- ═══════════════════════════════════\n\n`;
+  state.entities.forEach(e=>{
+    ddl+=`CREATE TABLE ${e.name} (\n`;const lines=[],pks=[];
+    e.fields.forEach(f=>{
+      const sqlType=TYPE_TO_SQL[f.type]||f.type;
+      let l=`  ${f.name} ${sqlType}`;
+      if(f.autoIncrement)l+=' AUTO_INCREMENT';if(!f.nullable)l+=' NOT NULL';
+      if(f.unique&&!f.primaryKey)l+=' UNIQUE';if(f.default)l+=` DEFAULT ${f.default}`;
+      lines.push(l);if(f.primaryKey)pks.push(f.name);
+    });
+    if(pks.length)lines.push(`  PRIMARY KEY (${pks.join(', ')})`);
+    e.fields.filter(f=>f.index&&!f.primaryKey).forEach(f=>{lines.push(`  INDEX idx_${e.name}_${f.name} (${f.name})`);});
+    ddl+=lines.join(',\n')+'\n);\n\n';
+  });
+  const fks=state.relationships.filter(r=>r.type!=='N:M');
+  if(fks.length){ddl+='-- ── Foreign Keys ──\n\n';fks.forEach(r=>{const fe=state.entities.find(e=>e.id===r.fromEntity),te=state.entities.find(e=>e.id===r.toEntity);const ff=fe?.fields.find(f=>f.id===r.fromField),tf=te?.fields.find(f=>f.id===r.toField);if(fe&&te&&ff&&tf)ddl+=`ALTER TABLE ${fe.name}\n  ADD CONSTRAINT fk_${fe.name}_${ff.name}\n  FOREIGN KEY (${ff.name}) REFERENCES ${te.name}(${tf.name});\n\n`;});}
+  const nm=state.relationships.filter(r=>r.type==='N:M');
+  if(nm.length){ddl+='-- ── Junction Tables (N:M) ──\n\n';nm.forEach(r=>{const fe=state.entities.find(e=>e.id===r.fromEntity),te=state.entities.find(e=>e.id===r.toEntity);const ff=fe?.fields.find(f=>f.id===r.fromField),tf=te?.fields.find(f=>f.id===r.toField);if(fe&&te&&ff&&tf){const jt=`${fe.name}_${te.name}`;const ftSql=TYPE_TO_SQL[ff.type]||ff.type,ttSql=TYPE_TO_SQL[tf.type]||tf.type;ddl+=`CREATE TABLE ${jt} (\n  ${fe.name}_${ff.name} ${ftSql} NOT NULL,\n  ${te.name}_${tf.name} ${ttSql} NOT NULL,\n  PRIMARY KEY (${fe.name}_${ff.name}, ${te.name}_${tf.name}),\n  FOREIGN KEY (${fe.name}_${ff.name}) REFERENCES ${fe.name}(${ff.name}),\n  FOREIGN KEY (${te.name}_${tf.name}) REFERENCES ${te.name}(${tf.name})\n);\n\n`;}});}
+  document.getElementById('ddlContent').textContent=ddl;document.getElementById('ddlModal').classList.add('open');
+}
+function closeDDL(){document.getElementById('ddlModal').classList.remove('open');}
+function copyDDL(){navigator.clipboard.writeText(document.getElementById('ddlContent').textContent).then(()=>toast('SQL copiado!','success'));}
+
+// ── HELP ──
+function showHelp(){
+  document.getElementById('helpModalBody').innerHTML=`
+    <div class="help-columns">
+      <div class="help-col">
+        <div class="help-section">
+          <div class="help-section-title">Atalhos e Interações</div>
+          <table class="help-table">
+            <thead><tr><th>Ação</th><th>Como fazer</th></tr></thead>
+            <tbody>
+              <tr><td>Desfazer</td><td><span class="help-kbd">Ctrl+Z</span></td></tr>
+              <tr><td>Refazer</td><td><span class="help-kbd">Ctrl+Y</span></td></tr>
+              <tr><td>Excluir entidade selecionada</td><td><span class="help-kbd">Delete</span></td></tr>
+              <tr><td>Fechar painéis e modais</td><td><span class="help-kbd">Esc</span></td></tr>
+              <tr><td>Zoom in/out</td><td><span class="help-kbd">Scroll</span> no canvas</td></tr>
+              <tr><td>Mover entidade</td><td>Arrastar o cabeçalho do card</td></tr>
+              <tr><td>Navegar pelo canvas</td><td>Arrastar área vazia</td></tr>
+              <tr><td>Expandir/Colapsar card</td><td>Botão <span class="help-kbd">⇅</span> no header</td></tr>
+              <tr><td>Editar relacionamento</td><td>Duplo clique na seta</td></tr>
+              <tr><td>Menu de contexto</td><td>Clique direito em card ou seta</td></tr>
+              <tr><td>Ocultar painel esquerdo</td><td>Botão <span class="help-kbd">☰</span> na barra superior</td></tr>
+              <tr><td>Redimensionar painéis</td><td>Arrastar borda interna do painel</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="help-section" style="margin-top:20px;">
+          <div class="help-section-title">Ícones nos Cards</div>
+          <table class="help-table">
+            <thead><tr><th>Ícone</th><th>Significado</th></tr></thead>
+            <tbody>
+              <tr><td style="color:#d4a017;font-family:monospace;">🔑 vpn_key</td><td><strong>PK</strong> — Chave primária</td></tr>
+              <tr><td style="color:var(--blue);font-family:monospace;">🔗 link</td><td><strong>FK</strong> — Chave estrangeira (referencia outra entidade)</td></tr>
+              <tr><td style="color:#e67e22;font-family:monospace;">↙ call_received</td><td><strong>REF</strong> — Campo referenciado por FK de outra entidade</td></tr>
+              <tr><td style="color:#27ae60;font-family:monospace;">⚡ bolt</td><td><strong>IDX</strong> — Possui índice de banco</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="help-col-wide">
+        <div class="help-section">
+          <div class="help-section-title">Tipos de Dados — SQLModel / SQLAlchemy</div>
+          <table class="help-table">
+            <thead><tr><th>Tipo Python</th><th>SQL</th><th>Quando usar</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Integer</strong></td><td>INT</td><td>Inteiros comuns — IDs, contadores, idades</td></tr>
+              <tr><td><strong>BigInteger</strong></td><td>BIGINT</td><td>Inteiros de alta escala — IDs em sistemas grandes, timestamps Unix</td></tr>
+              <tr><td><strong>SmallInteger</strong></td><td>SMALLINT</td><td>Inteiros pequenos (−32k a +32k) — economiza espaço</td></tr>
+              <tr><td><strong>String(n)</strong></td><td>VARCHAR(n)</td><td>Texto com tamanho máximo — nomes, e-mails, slugs, tokens</td></tr>
+              <tr><td><strong>AutoString</strong></td><td>VARCHAR(255)</td><td>String com comprimento gerenciado pelo SQLModel</td></tr>
+              <tr><td><strong>Text</strong></td><td>TEXT</td><td>Texto longo — descrições, conteúdo, Markdown, HTML</td></tr>
+              <tr><td><strong>Float</strong></td><td>FLOAT</td><td>Ponto flutuante (impreciso) — coordenadas, métricas aproximadas</td></tr>
+              <tr><td><strong>Numeric(p,s)</strong></td><td>DECIMAL(p,s)</td><td>Decimal com precisão exata — valores monetários</td></tr>
+              <tr><td><strong>Boolean</strong></td><td>BOOLEAN</td><td>Verdadeiro/falso — flags, ativo/inativo, confirmado</td></tr>
+              <tr><td><strong>Date</strong></td><td>DATE</td><td>Apenas data (sem hora) — nascimento, vencimento</td></tr>
+              <tr><td><strong>DateTime</strong></td><td>DATETIME</td><td>Data e hora — criado_em, atualizado_em, logs</td></tr>
+              <tr><td><strong>Time</strong></td><td>TIME</td><td>Apenas hora — horário de funcionamento, duração</td></tr>
+              <tr><td><strong>JSON</strong></td><td>JSON</td><td>Dados estruturados variáveis — configurações, metadados</td></tr>
+              <tr><td><strong>LargeBinary</strong></td><td>BLOB</td><td>Dados binários — arquivos, imagens no banco</td></tr>
+              <tr><td><strong>UUID</strong></td><td>CHAR(36)</td><td>Identificador único universal — IDs sem sequência exposta</td></tr>
+              <tr><td><strong>Enum</strong></td><td>VARCHAR(100)</td><td>Conjunto fixo de opções — status, categorias, papéis</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('helpModal').classList.add('open');
+}
+function closeHelp(){document.getElementById('helpModal').classList.remove('open');}
+
+// ── REPORT ──
+function showReport(){
+  const name=state.project.name||'Projeto';
+  const now=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  let h=`<div class="doc-header"><div><div class="doc-eyebrow">Polaris · Arquitetura de Dados</div><div class="doc-title">Modelo de <strong>Dados — ${esc(name)}</strong></div></div><div class="doc-meta">${now}<br>${state.entities.length} entidades · ${state.relationships.length} relacionamentos</div></div>`;
+
+  if(state.entities.length){
+    h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">01</span><span class="chapter-title">Resumo do Modelo</span><div class="chapter-line"></div></div><table><thead><tr><th>Entidade</th><th>Campos</th><th>PK</th><th>Relações</th><th>Notas</th></tr></thead><tbody>`;
+    state.entities.forEach(e=>{const pk=e.fields.filter(f=>f.primaryKey).map(f=>f.name).join(', ')||'—';const rc=state.relationships.filter(r=>r.fromEntity===e.id||r.toEntity===e.id).length;
+      h+=`<tr><td><strong style="color:var(--navy);">${esc(e.name)}</strong></td><td>${e.fields.length}</td><td style="font-family:monospace;font-size:11px;">${pk}</td><td>${rc}</td><td style="font-size:11px;color:var(--steel);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.notes)||'—'}</td></tr>`;});
+    h+=`</tbody></table></div>`;
+  }
+
+  h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">02</span><span class="chapter-title">Detalhamento de Entidades</span><div class="chapter-line"></div></div>`;
+  state.entities.forEach(e=>{
+    h+=`<div class="entity-block"><div class="entity-block-header"><div class="entity-block-color" style="background:${e.color}"></div><div class="entity-block-name">${esc(e.name)}</div></div>`;
+    if(e.notes)h+=`<div class="entity-block-notes">${esc(e.notes)}</div>`;
+    h+=`<table><thead><tr><th>Campo</th><th>Tipo Python</th><th>SQL</th><th>Atributos</th><th>Default</th></tr></thead><tbody>`;
+    e.fields.forEach(f=>{const sqlType=TYPE_TO_SQL[f.type]||f.type;const isFieldFk=state.relationships.some(r=>r.fromEntity===e.id&&r.fromField===f.id);const isFieldRef=state.relationships.some(r=>r.toEntity===e.id&&r.toField===f.id);const badges=[];if(f.primaryKey)badges.push('<span class="report-badge pk">PK</span>');if(!f.nullable)badges.push('<span class="report-badge nn">NN</span>');if(f.unique)badges.push('<span class="report-badge uq">UQ</span>');if(f.index)badges.push('<span class="report-badge idx">IDX</span>');if(f.autoIncrement)badges.push('<span class="report-badge ai">AI</span>');if(isFieldFk)badges.push('<span class="report-badge fk">FK</span>');if(isFieldRef)badges.push('<span class="report-badge ref">REF</span>');h+=`<tr><td><strong>${esc(f.name)}</strong></td><td style="font-family:monospace;font-size:11px;">${esc(f.type)}</td><td style="font-family:monospace;font-size:11px;color:var(--steel);">${sqlType}</td><td style="white-space:nowrap;">${badges.join('')||'<span style="color:var(--haze)">—</span>'}</td><td style="font-family:monospace;font-size:10px;word-break:break-all;">${esc(f.default)||'—'}</td></tr>`;});
+    h+=`</tbody></table></div>`;
+  });
+  h+=`</div>`;
+
+  if(state.relationships.length){
+    h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">03</span><span class="chapter-title">Relacionamentos</span><div class="chapter-line"></div></div><table><thead><tr><th>Origem</th><th>Campo</th><th>→</th><th>Destino</th><th>Campo</th><th>Tipo</th><th>Label</th></tr></thead><tbody>`;
+    state.relationships.forEach(r=>{const fe=state.entities.find(e=>e.id===r.fromEntity),te=state.entities.find(e=>e.id===r.toEntity);const ff=fe?.fields.find(f=>f.id===r.fromField),tf=te?.fields.find(f=>f.id===r.toField);
+      h+=`<tr><td><strong>${fe?esc(fe.name):'???'}</strong></td><td style="font-family:monospace;">${ff?esc(ff.name):'???'}</td><td style="text-align:center;">→</td><td><strong>${te?esc(te.name):'???'}</strong></td><td style="font-family:monospace;">${tf?esc(tf.name):'???'}</td><td>${r.type}</td><td style="color:var(--steel);">${esc(r.label)||'—'}</td></tr>`;});
+    h+=`</tbody></table></div>`;
+  }
+
+  if(state.groups.length){
+    h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">04</span><span class="chapter-title">Grupos</span><div class="chapter-line"></div></div><table><thead><tr><th>Grupo</th><th>Entidades</th></tr></thead><tbody>`;
+    state.groups.forEach(g=>{const ents=state.entities.filter(e=>g.entityIds.includes(e.id));h+=`<tr><td><strong style="color:var(--navy);">${esc(g.name)}</strong></td><td>${ents.map(e=>esc(e.name)).join(', ')||'—'}</td></tr>`;});
+    h+=`</tbody></table></div>`;
+  }
+
+  const errs=validateAll();
+  const chNum=state.groups.length?'05':'04';
+  if(errs.length){h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">${chNum}</span><span class="chapter-title">Validações</span><div class="chapter-line"></div></div>`;errs.forEach(err=>{h+=`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--ice);"><span style="color:var(--red);font-size:14px;" class="material-icons-outlined">error_outline</span><span style="font-size:12px;color:var(--slate);">${esc(err.msg)}</span></div>`;});h+=`</div>`;}
+
+  h+=`<div class="doc-footer"><span>Polaris Data Architect — ${esc(name)}</span><span>Gerado em ${now}</span></div>`;
+  document.getElementById('reportContent').innerHTML=h;document.getElementById('reportOverlay').classList.add('open');
+}
+function closeReport(){document.getElementById('reportOverlay').classList.remove('open');}
+
+// ── KEYBOARD ──
+window.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='y'){e.preventDefault();redo();}
+  if(e.key==='Delete'&&selectedEntityId)deleteEntity(selectedEntityId);
+  if(e.key==='Escape'){closeRightPanel();closeCtx();closeRelModal();closeDDL();closeConfirm();closeReport();closeHelp();closeGroupModal();}
+});
+
+canvasArea.addEventListener('click',e=>{if((e.target===canvasArea||e.target.id==='canvasViewport')&&selectedEntityId&&!dragMoved){selectedEntityId=null;closeRightPanel();renderCanvas();renderEntityList();}});
+
+window.addEventListener('beforeunload',e=>{if(hasUnsavedChanges){e.preventDefault();e.returnValue='';}});
+
+// ── RESIZE HANDLES ──
+(function(){
+  function initResize(handleId, cssVar, isLeft, min, max){
+    const handle=document.getElementById(handleId);if(!handle)return;
+    let dragging=false,startX=0,startVal=0;
+    handle.addEventListener('mousedown',e=>{
+      e.preventDefault();dragging=true;handle.classList.add('active');
+      startX=e.clientX;
+      startVal=parseInt(getComputedStyle(document.documentElement).getPropertyValue(cssVar))||0;
+      document.body.style.userSelect='none';
+    });
+    window.addEventListener('mousemove',e=>{
+      if(!dragging)return;
+      const diff=isLeft?(e.clientX-startX):(startX-e.clientX);
+      const val=Math.max(min,Math.min(max,startVal+diff));
+      document.documentElement.style.setProperty(cssVar,val+'px');
+      // Update canvas area left if resizing left panel
+      if(isLeft&&!document.body.classList.contains('lp-hidden')){
+        canvasArea.style.left=val+'px';
+        document.querySelector('.zoom-indicator').style.left=(val+16)+'px';
+      }
+    });
+    window.addEventListener('mouseup',()=>{
+      if(dragging){dragging=false;handle.classList.remove('active');document.body.style.userSelect='';}
+    });
+  }
+  initResize('leftResize','--left-w',true,160,400);
+  initResize('rightResize','--right-w',false,280,520);
+})();
+
+// ── INIT ──
+renderAll();updateViewport();
+</script>
+</body>
+</html>
