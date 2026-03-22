@@ -74,6 +74,7 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
 .canvas-viewport{position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0;}
 .canvas-svg{position:absolute;top:0;left:0;width:6000px;height:6000px;pointer-events:none;overflow:visible;}
 .rel-path{fill:none;stroke:var(--haze);stroke-width:1.5;pointer-events:stroke;cursor:pointer;}
+.rel-path-ext{stroke-dasharray:5 3;stroke:#9bb0c4;}
 .rel-path:hover{stroke:var(--blue);stroke-width:2;}
 .rel-label{font-family:'Inter',sans-serif;font-size:9.5px;font-weight:600;fill:var(--steel);pointer-events:none;}
 
@@ -96,7 +97,7 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
 .entity-fields{padding:6px 0;}
 .entity-field-row{display:flex;align-items:center;gap:6px;padding:3px 14px;font-size:11px;color:var(--slate);}
 .entity-field-icon{font-size:13px;color:var(--haze);flex-shrink:0;width:16px;text-align:center;}
-.entity-field-icon.pk{color:#d4a017;}.entity-field-icon.fk{color:var(--blue);}.entity-field-icon.ref{color:#e67e22;}.entity-field-icon.idx{color:#27ae60;}
+.entity-field-icon.pk{color:#d4a017;}.entity-field-icon.fk{color:var(--blue);}.entity-field-icon.ref{color:#e67e22;}.entity-field-icon.fr{color:#e07a2f;}.entity-field-icon.idx{color:#27ae60;}
 .entity-field-name{font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .entity-field-type{font-size:10px;color:var(--steel);font-family:'Courier New',monospace;flex-shrink:0;}
 .entity-more{padding:4px 14px 8px;font-size:10px;color:var(--steel);font-style:italic;}
@@ -130,7 +131,7 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
 .rp-field-card-badges{display:flex;gap:3px;}
 .rp-field-badge{font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;letter-spacing:0.5px;}
 .rp-field-badge.pk{background:#fef3cd;color:#856404;}.rp-field-badge.fk{background:var(--tag-blue-bg);color:var(--navy);}
-.rp-field-badge.idx{background:#d5f5e3;color:#1e8449;}.rp-field-badge.uq{background:#e8daef;color:#6c3483;}.rp-field-badge.nn{background:var(--tag-red-bg);color:var(--red);}.rp-field-badge.ref{background:#fdebd0;color:#af601a;}
+.rp-field-badge.idx{background:#d5f5e3;color:#1e8449;}.rp-field-badge.uq{background:#e8daef;color:#6c3483;}.rp-field-badge.nn{background:var(--tag-red-bg);color:var(--red);}.rp-field-badge.ref{background:#fdebd0;color:#af601a;}.rp-field-badge.fr{background:#fde8d8;color:#b94a00;}
 .rp-drag-handle{cursor:grab;color:var(--haze);display:flex;align-items:center;flex-shrink:0;transition:color var(--trans);margin-right:2px;}
 .rp-drag-handle:hover{color:var(--slate);}
 .rp-drag-handle .material-icons-outlined{font-size:15px;}
@@ -203,6 +204,7 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
 .report-badge.nn{background:#fde8e8;color:#922b21;}
 .report-badge.uq{background:#e8daef;color:#6c3483;}
 .report-badge.idx{background:#d5f5e3;color:#1e8449;}
+.report-badge.fr{background:#fde8d8;color:#b94a00;}
 .report-badge.ai{background:#eaf2f8;color:#2e86c1;}
 .unsaved-indicator{width:7px;height:7px;border-radius:50%;background:#f39c12;opacity:0;flex-shrink:0;transition:opacity 0.3s;}
 .unsaved-indicator.visible{opacity:1;animation:unsaved-pulse 2s ease infinite;}
@@ -270,6 +272,12 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
   .report .entity-block{break-inside:avoid;}
 }
 #fileInput{display:none;}
+/* ── External System Cards ── */
+.ext-card{position:absolute;background:#f4f7fb;border:1.5px dashed #9bb0c4;border-radius:8px;min-width:160px;max-width:220px;box-shadow:0 1px 3px rgba(28,43,58,0.07);cursor:pointer;user-select:none;}
+.ext-header{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:grab;}
+.ext-icon{font-size:18px;color:#5b7fa6;}
+.ext-name{font-size:12px;font-weight:600;color:var(--navy);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ext-service-tag{font-size:9px;font-weight:700;letter-spacing:.5px;background:#dce8f0;color:#3a6080;border-radius:3px;padding:1px 5px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -298,6 +306,7 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
     <button class="lp-btn" onclick="addEntity()"><span class="material-icons-outlined">add_box</span>Nova Entidade</button>
     <button class="lp-btn" onclick="openRelModal()"><span class="material-icons-outlined">link</span>Novo Relacionamento</button>
     <button class="lp-btn" onclick="addGroup()"><span class="material-icons-outlined">folder_special</span>Novo Grupo</button>
+    <button class="lp-btn" onclick="addExternalSystem()"><span class="material-icons-outlined">cloud</span>Sistema Externo</button>
     <button class="lp-btn" onclick="autoLayout()"><span class="material-icons-outlined">auto_fix_high</span>Auto Layout</button>
     <button class="lp-btn" onclick="undo()" title="Ctrl+Z"><span class="material-icons-outlined">undo</span>Desfazer</button>
     <button class="lp-btn" onclick="redo()" title="Ctrl+Y"><span class="material-icons-outlined">redo</span>Refazer</button>
@@ -400,6 +409,22 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
   </div>
 </div>
 
+<!-- External System Modal -->
+<div class="modal-overlay" id="extModal">
+  <div class="modal group-modal">
+    <div class="modal-header">
+      <span class="material-icons-outlined" style="color:#5b7fa6;font-size:20px;">cloud</span>
+      <div class="modal-title" id="extModalTitle">Novo Sistema Externo</div>
+      <button class="rp-close" onclick="closeExtModal()"><span class="material-icons-outlined">close</span></button>
+    </div>
+    <div class="modal-body" id="extModalBody"></div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeExtModal()">Cancelar</button>
+      <button class="modal-btn primary" onclick="saveExtModal()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Help Modal -->
 <div class="modal-overlay" id="helpModal">
   <div class="modal help-modal">
@@ -435,7 +460,8 @@ body.lp-hidden .zoom-indicator{left:16px !important;}
 // POLARIS DATA ARCHITECT — APP
 // ═══════════════════════════════════════
 
-let state = { project:{name:'Novo Projeto',createdAt:new Date().toISOString()}, entities:[], relationships:[], groups:[] };
+let state = { project:{name:'Novo Projeto',createdAt:new Date().toISOString()}, entities:[], relationships:[], groups:[], externalSystems:[] };
+let editingExtId = null;
 let selectedEntityId = null, editingRelId = null, editingGroupId = null;
 let undoStack = [], redoStack = [];
 let zoom = 1, panX = 0, panY = 0, isPanning = false, panStart = {x:0,y:0};
@@ -450,7 +476,9 @@ const SQL_TYPES = [
   'String(255)','String(100)','String(50)','String(36)',
   'Text','Float','Numeric(10,2)','Boolean',
   'Date','DateTime','Time',
-  'JSON','LargeBinary','UUID','AutoString','Enum'
+  'JSON','LargeBinary','UUID','AutoString','Enum',
+  'Vector(128)','Vector(256)','Vector(384)','Vector(512)',
+  'Vector(768)','Vector(1024)','Vector(1536)'
 ];
 
 const TYPE_TO_SQL = {
@@ -460,7 +488,11 @@ const TYPE_TO_SQL = {
   'Text':'TEXT','Float':'FLOAT','Numeric(10,2)':'DECIMAL(10,2)',
   'Boolean':'BOOLEAN','Date':'DATE','DateTime':'DATETIME','Time':'TIME',
   'JSON':'JSON','LargeBinary':'BLOB','UUID':'CHAR(36)',
-  'AutoString':'VARCHAR(255)','Enum':'VARCHAR(100)'
+  'AutoString':'VARCHAR(255)','Enum':'VARCHAR(100)',
+  'Vector(128)':'VECTOR(128)','Vector(256)':'VECTOR(256)',
+  'Vector(384)':'VECTOR(384)','Vector(512)':'VECTOR(512)',
+  'Vector(768)':'VECTOR(768)','Vector(1024)':'VECTOR(1024)',
+  'Vector(1536)':'VECTOR(1536)'
 };
 
 const ENTITY_COLORS = ['#1b4f72','#2e86c1','#1a5276','#2874a6','#148f77','#1e8449','#1d8348','#117a65','#7d3c98','#6c3483','#884ea0','#c0392b','#922b21','#a93226','#d4a017','#b7950b','#af601a','#2c3e50','#566573','#707b7c'];
@@ -493,24 +525,29 @@ function dragFieldStart(e,entityId,fieldId){_dragFieldId=fieldId;_dragEntityId=e
 function dragFieldOver(e,targetFieldId){e.preventDefault();e.dataTransfer.dropEffect='move';document.querySelectorAll('.rp-field-card').forEach(c=>c.classList.remove('drag-over'));if(targetFieldId!==_dragFieldId)document.getElementById('fc_'+targetFieldId)?.classList.add('drag-over');}
 function dragFieldDrop(e,entityId,targetFieldId){e.preventDefault();if(!_dragFieldId||_dragFieldId===targetFieldId||_dragEntityId!==entityId)return;const ent=state.entities.find(x=>x.id===entityId);if(!ent)return;pushUndo();const fromIdx=ent.fields.findIndex(f=>f.id===_dragFieldId);const toIdx=ent.fields.findIndex(f=>f.id===targetFieldId);if(fromIdx<0||toIdx<0)return;const [field]=ent.fields.splice(fromIdx,1);ent.fields.splice(toIdx,0,field);renderAll();renderRightPanel();}
 function dragFieldEnd(e){document.querySelectorAll('.rp-field-card').forEach(c=>{c.classList.remove('drag-over');c.style.opacity='';});_dragFieldId=null;_dragEntityId=null;}
-function undo(){if(!undoStack.length)return;redoStack.push(JSON.stringify(state));state=JSON.parse(undoStack.pop());document.getElementById('projectName').value=state.project.name;if(!state.groups)state.groups=[];selectedEntityId=null;closeRightPanel();renderAll();toast('Ação desfeita','info');}
-function redo(){if(!redoStack.length)return;undoStack.push(JSON.stringify(state));state=JSON.parse(redoStack.pop());document.getElementById('projectName').value=state.project.name;if(!state.groups)state.groups=[];selectedEntityId=null;closeRightPanel();renderAll();toast('Ação refeita','info');}
+function undo(){if(!undoStack.length)return;redoStack.push(JSON.stringify(state));state=JSON.parse(undoStack.pop());document.getElementById('projectName').value=state.project.name;if(!state.groups)state.groups=[];if(!state.externalSystems)state.externalSystems=[];selectedEntityId=null;closeRightPanel();renderAll();toast('Ação desfeita','info');}
+function redo(){if(!redoStack.length)return;undoStack.push(JSON.stringify(state));state=JSON.parse(redoStack.pop());document.getElementById('projectName').value=state.project.name;if(!state.groups)state.groups=[];if(!state.externalSystems)state.externalSystems=[];selectedEntityId=null;closeRightPanel();renderAll();toast('Ação refeita','info');}
 
 // ── VALIDATION ──
 function validateAll(){
   const errors=[];
   state.relationships.forEach(r=>{
-    const fe=state.entities.find(e=>e.id===r.fromEntity),te=state.entities.find(e=>e.id===r.toEntity);
+    const fe=state.entities.find(e=>e.id===r.fromEntity);
     if(!fe)errors.push({relId:r.id,msg:'Rel. referencia entidade de origem inexistente'});
-    if(!te)errors.push({relId:r.id,msg:'Rel. referencia entidade de destino inexistente'});
     if(fe&&!fe.fields.find(f=>f.id===r.fromField))errors.push({relId:r.id,entityId:fe.id,msg:`Campo FK inexistente em ${fe.name}`});
-    if(te&&!te.fields.find(f=>f.id===r.toField))errors.push({relId:r.id,entityId:te.id,msg:`Campo referenciado inexistente em ${te.name}`});
+    if(r.toExternalSystem){
+      if(!state.externalSystems.find(s=>s.id===r.toExternalSystem))errors.push({relId:r.id,msg:'Rel. referencia sistema externo inexistente'});
+    } else {
+      const te=state.entities.find(e=>e.id===r.toEntity);
+      if(!te)errors.push({relId:r.id,msg:'Rel. referencia entidade de destino inexistente'});
+      if(te&&!te.fields.find(f=>f.id===r.toField))errors.push({relId:r.id,entityId:te.id,msg:`Campo referenciado inexistente em ${te.name}`});
+    }
   });
   return errors;
 }
 
 // ── PROJECT ──
-function newProject(){confirm2('Novo Projeto','Criar um novo projeto irá descartar o atual. Continuar?',()=>{pushUndo();state={project:{name:'Novo Projeto',createdAt:new Date().toISOString()},entities:[],relationships:[],groups:[]};document.getElementById('projectName').value=state.project.name;selectedEntityId=null;expandedCards.clear();closeRightPanel();zoom=1;panX=0;panY=0;updateViewport();renderAll();toast('Novo projeto criado','success');markClean();});}
+function newProject(){confirm2('Novo Projeto','Criar um novo projeto irá descartar o atual. Continuar?',()=>{pushUndo();state={project:{name:'Novo Projeto',createdAt:new Date().toISOString()},entities:[],relationships:[],groups:[],externalSystems:[]};document.getElementById('projectName').value=state.project.name;selectedEntityId=null;expandedCards.clear();closeRightPanel();zoom=1;panX=0;panY=0;updateViewport();renderAll();toast('Novo projeto criado','success');markClean();});}
 
 function exportProject(){
   state.project.name=document.getElementById('projectName').value||'Novo Projeto';
@@ -525,7 +562,7 @@ function importProject(){document.getElementById('fileInput').click();}
 document.getElementById('fileInput').addEventListener('change',e=>{
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!data.entities||!data.relationships)throw new Error('Formato inválido');pushUndo();state=data;if(!state.project)state.project={name:'Importado',createdAt:new Date().toISOString()};if(!state.groups)state.groups=[];document.getElementById('projectName').value=state.project.name;selectedEntityId=null;expandedCards.clear();closeRightPanel();renderAll();toast('Projeto importado','success');markClean();}catch(err){toast('Erro: '+err.message,'error');}};
+  reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!data.entities||!data.relationships)throw new Error('Formato inválido');pushUndo();state=data;if(!state.project)state.project={name:'Importado',createdAt:new Date().toISOString()};if(!state.groups)state.groups=[];if(!state.externalSystems)state.externalSystems=[];document.getElementById('projectName').value=state.project.name;selectedEntityId=null;expandedCards.clear();closeRightPanel();renderAll();toast('Projeto importado','success');markClean();}catch(err){toast('Erro: '+err.message,'error');}};
   reader.readAsText(file);e.target.value='';
 });
 document.getElementById('projectName').addEventListener('input',e=>{state.project.name=e.target.value;});
@@ -537,7 +574,7 @@ function addEntity(){
   const cx=(rect.width/2-panX)/zoom, cy=(rect.height/2-panY)/zoom;
   const e={id:uid(),name:'nova_entidade',color:ENTITY_COLORS[state.entities.length%ENTITY_COLORS.length],notes:'',
     x:cx-100+Math.random()*60-30, y:cy-60+Math.random()*60-30,
-    fields:[{id:uid(),name:'id',type:'Integer',primaryKey:true,autoIncrement:true,nullable:false,unique:false,index:false,default:''}]};
+    fields:[{id:uid(),name:'id',type:'Integer',primaryKey:true,autoIncrement:true,nullable:false,unique:false,index:false,fileRef:false,default:''}]};
   state.entities.push(e);renderAll();selectEntity(e.id);toast('Entidade criada','success');
 }
 
@@ -551,7 +588,7 @@ function duplicateEntity(id){
 }
 
 // ── FIELDS ──
-function addField(entityId){pushUndo();const e=state.entities.find(x=>x.id===entityId);if(!e)return;e.fields.push({id:uid(),name:'novo_campo',type:'String(255)',primaryKey:false,autoIncrement:false,nullable:true,unique:false,index:false,default:''});renderAll();renderRightPanel();}
+function addField(entityId){pushUndo();const e=state.entities.find(x=>x.id===entityId);if(!e)return;e.fields.push({id:uid(),name:'novo_campo',type:'String(255)',primaryKey:false,autoIncrement:false,nullable:true,unique:false,index:false,fileRef:false,default:''});renderAll();renderRightPanel();}
 
 function deleteField(entityId,fieldId){pushUndo();const e=state.entities.find(x=>x.id===entityId);if(!e)return;e.fields=e.fields.filter(f=>f.id!==fieldId);state.relationships=state.relationships.filter(r=>!((r.fromEntity===entityId&&r.fromField===fieldId)||(r.toEntity===entityId&&r.toField===fieldId)));renderAll();renderRightPanel();}
 
@@ -602,6 +639,54 @@ function updateEntityGroup(entityId,groupId){
   renderAll();renderRightPanel();
 }
 
+// ── EXTERNAL SYSTEMS ──
+const EXT_SERVICES = ['S3','GCS','Pinecone','Kafka','Redis','Filesystem','Custom'];
+const EXT_SERVICE_ICONS = {'S3':'cloud','GCS':'cloud_queue','Pinecone':'grain','Kafka':'hub','Redis':'storage','Filesystem':'folder','Custom':'lan'};
+function serviceIcon(s){return EXT_SERVICE_ICONS[s]||'cloud';}
+
+function addExternalSystem(){
+  pushUndo();
+  const rect=document.getElementById('canvasArea').getBoundingClientRect();
+  const cx=(rect.width/2-panX)/zoom, cy=(rect.height/2-panY)/zoom;
+  const ext={id:'ext_'+Math.random().toString(36).substr(2,9)+Date.now().toString(36),name:'Sistema Externo',service:'S3',notes:'',
+    x:cx-80+Math.random()*60-30, y:cy-30+Math.random()*60-30};
+  state.externalSystems.push(ext);renderAll();toast('Sistema externo criado','success');
+}
+
+function deleteExternalSystem(id){confirm2('Excluir Sistema Externo','Isso removerá o sistema e seus relacionamentos. Continuar?',()=>{pushUndo();state.externalSystems=state.externalSystems.filter(s=>s.id!==id);state.relationships=state.relationships.filter(r=>r.toExternalSystem!==id);renderAll();toast('Sistema externo excluído','success');});}
+
+function openExtModal(extId){
+  editingExtId=extId||null;
+  const ext=extId?state.externalSystems.find(s=>s.id===extId):null;
+  document.getElementById('extModalTitle').textContent=ext?'Editar Sistema Externo':'Novo Sistema Externo';
+  document.getElementById('extModalBody').innerHTML=`
+    <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Nome</label>
+    <input class="rp-input" id="extNameInput" value="${esc(ext?.name||'')}" placeholder="Ex: S3 Avatars..." autofocus></div></div>
+    <div class="rp-row" style="margin-top:10px;"><div class="rp-input-group"><label class="rp-label">Serviço</label>
+    <select class="rp-select" id="extServiceInput">
+      ${EXT_SERVICES.map(s=>`<option value="${s}" ${s===(ext?.service||'S3')?'selected':''}>${s}</option>`).join('')}
+    </select></div></div>
+    <div class="rp-row" style="margin-top:10px;"><div class="rp-input-group"><label class="rp-label">Notas</label>
+    <textarea class="rp-textarea" id="extNotesInput" placeholder="Documentação...">${esc(ext?.notes||'')}</textarea></div></div>`;
+  document.getElementById('extModal').classList.add('open');
+  setTimeout(()=>document.getElementById('extNameInput')?.focus(),50);
+}
+
+function saveExtModal(){
+  const name=(document.getElementById('extNameInput').value||'').trim();
+  if(!name){toast('Nome obrigatório','error');return;}
+  pushUndo();
+  const service=document.getElementById('extServiceInput').value;
+  const notes=document.getElementById('extNotesInput').value;
+  if(editingExtId){const s=state.externalSystems.find(x=>x.id===editingExtId);if(s){s.name=name;s.service=service;s.notes=notes;}}
+  else{state.externalSystems.push({id:'ext_'+Math.random().toString(36).substr(2,9)+Date.now().toString(36),name,service,notes,x:200,y:200});}
+  closeExtModal();renderAll();toast(editingExtId?'Sistema atualizado':'Sistema criado','success');
+}
+
+function closeExtModal(){document.getElementById('extModal').classList.remove('open');editingExtId=null;}
+
+function extCtxMenu(ev,id){ev.preventDefault();ev.stopPropagation();const m=document.getElementById('ctxMenu');m.innerHTML=`<div class="ctx-item" onclick="openExtModal('${id}');closeCtx();"><span class="material-icons-outlined">edit</span>Editar</div><div class="ctx-sep"></div><div class="ctx-item danger" onclick="deleteExternalSystem('${id}');closeCtx();"><span class="material-icons-outlined">delete_outline</span>Excluir</div>`;showCtx(ev.clientX,ev.clientY);}
+
 // ── RELATIONSHIPS ──
 function openRelModal(relId){
   editingRelId=relId||null;
@@ -609,33 +694,74 @@ function openRelModal(relId){
   document.getElementById('relModalTitle').textContent=rel?'Editar Relacionamento':'Novo Relacionamento';
   if(!state.entities.length){toast('Crie entidades primeiro','error');return;}
   const entOpts=state.entities.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+  const extOpts=state.externalSystems.map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(s.service)})</option>`).join('');
+  const isExtRel=rel&&!!rel.toExternalSystem;
   document.getElementById('relModalBody').innerHTML=`
     <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Entidade de origem</label><select class="rp-select" id="relFrom" onchange="updateRelFields()">${entOpts}</select></div>
-    <div class="rp-input-group"><label class="rp-label">Campo (FK)</label><select class="rp-select" id="relFromField"></select></div></div>
+    <div class="rp-input-group"><label class="rp-label">Campo (FK/Ref)</label><select class="rp-select" id="relFromField"></select></div></div>
     <div style="text-align:center;padding:6px 0;"><span class="material-icons-outlined" style="color:var(--haze);font-size:20px;">arrow_downward</span></div>
+    <div class="rp-row" style="margin-bottom:8px;"><div class="rp-input-group"><label class="rp-label">Tipo de destino</label>
+    <select class="rp-select" id="relTargetType" onchange="toggleRelTargetType()">
+      <option value="entity" ${isExtRel?'':'selected'}>Entidade</option>
+      <option value="ext" ${isExtRel?'selected':''}>Sistema Externo</option>
+    </select></div></div>
+    <div id="relEntityTarget" style="${isExtRel?'display:none':''}">
     <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Entidade de destino</label><select class="rp-select" id="relTo" onchange="updateRelFields()">${entOpts}</select></div>
-    <div class="rp-input-group"><label class="rp-label">Campo referenciado</label><select class="rp-select" id="relToField"></select></div></div>
-    <div class="rp-row" style="margin-top:8px;"><div class="rp-input-group"><label class="rp-label">Tipo</label><select class="rp-select" id="relType"><option value="1:1">1:1 — Um para Um</option><option value="1:N" selected>1:N — Um para Muitos</option><option value="N:M">N:M — Muitos para Muitos</option></select></div>
-    <div class="rp-input-group"><label class="rp-label">Label (opcional)</label><input class="rp-input" id="relLabel" placeholder="Ex: pertence a"></div></div>`;
-  if(rel){document.getElementById('relFrom').value=rel.fromEntity;document.getElementById('relTo').value=rel.toEntity;document.getElementById('relType').value=rel.type;document.getElementById('relLabel').value=rel.label||'';}
+    <div class="rp-input-group"><label class="rp-label">Campo referenciado</label><select class="rp-select" id="relToField"></select></div></div></div>
+    <div id="relExtTarget" style="${isExtRel?'':'display:none'}">
+    <div class="rp-row"><div class="rp-input-group"><label class="rp-label">Sistema externo de destino</label>
+    <select class="rp-select" id="relToExt">${extOpts||'<option value="">— Nenhum sistema externo —</option>'}</select></div></div></div>
+    <div class="rp-row" style="margin-top:8px;"><div class="rp-input-group"><label class="rp-label">Tipo</label><select class="rp-select" id="relType"><option value="1:1">1:1 — Um para Um</option><option value="1:N" selected>1:N — Um para Muitos</option><option value="N:M">N:M — Muitos para Muitos</option><option value="ext">→ Ext — Referência externa</option></select></div>
+    <div class="rp-input-group"><label class="rp-label">Label (opcional)</label><input class="rp-input" id="relLabel" placeholder="Ex: stored in"></div></div>`;
+  if(rel){
+    document.getElementById('relFrom').value=rel.fromEntity;
+    if(!isExtRel){document.getElementById('relTo').value=rel.toEntity;}
+    document.getElementById('relType').value=rel.type;
+    document.getElementById('relLabel').value=rel.label||'';
+  }
   updateRelFields();
-  if(rel)setTimeout(()=>{document.getElementById('relFromField').value=rel.fromField;document.getElementById('relToField').value=rel.toField;},10);
+  if(rel&&!isExtRel)setTimeout(()=>{document.getElementById('relFromField').value=rel.fromField;document.getElementById('relToField').value=rel.toField;},10);
+  if(rel&&isExtRel)setTimeout(()=>{document.getElementById('relFromField').value=rel.fromField;document.getElementById('relToExt').value=rel.toExternalSystem;},10);
   document.getElementById('relModal').classList.add('open');
+}
+
+function toggleRelTargetType(){
+  const isExt=document.getElementById('relTargetType').value==='ext';
+  document.getElementById('relEntityTarget').style.display=isExt?'none':'';
+  document.getElementById('relExtTarget').style.display=isExt?'':'none';
+  if(isExt){const relType=document.getElementById('relType');if(relType.value!=='ext')relType.value='ext';}
 }
 
 function updateRelFields(){
   const fromE=state.entities.find(e=>e.id===document.getElementById('relFrom').value);
-  const toE=state.entities.find(e=>e.id===document.getElementById('relTo').value);
+  const toEl=document.getElementById('relTo');
+  const toE=toEl?state.entities.find(e=>e.id===toEl.value):null;
   document.getElementById('relFromField').innerHTML=fromE?fromE.fields.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join(''):'';
-  document.getElementById('relToField').innerHTML=toE?toE.fields.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join(''):'';
+  if(toEl)document.getElementById('relToField').innerHTML=toE?toE.fields.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join(''):'';
 }
 
 function saveRelationship(){
-  const d={fromEntity:document.getElementById('relFrom').value,toEntity:document.getElementById('relTo').value,fromField:document.getElementById('relFromField').value,toField:document.getElementById('relToField').value,type:document.getElementById('relType').value,label:document.getElementById('relLabel').value.trim()};
-  if(!d.fromEntity||!d.toEntity||!d.fromField||!d.toField){toast('Preencha todos os campos','error');return;}
-  pushUndo();
-  if(editingRelId){const rel=state.relationships.find(r=>r.id===editingRelId);if(rel)Object.assign(rel,d);}
-  else state.relationships.push({id:uid(),...d});
+  const isExt=document.getElementById('relTargetType').value==='ext';
+  const fromEntity=document.getElementById('relFrom').value;
+  const fromField=document.getElementById('relFromField').value;
+  const label=document.getElementById('relLabel').value.trim();
+  const type=document.getElementById('relType').value;
+  if(isExt){
+    const toExternalSystem=document.getElementById('relToExt').value;
+    if(!fromEntity||!fromField||!toExternalSystem){toast('Preencha todos os campos','error');return;}
+    const d={fromEntity,fromField,toExternalSystem,toEntity:null,toField:null,type:'ext',label};
+    pushUndo();
+    if(editingRelId){const rel=state.relationships.find(r=>r.id===editingRelId);if(rel)Object.assign(rel,d);}
+    else state.relationships.push({id:uid(),...d});
+  } else {
+    const toEntity=document.getElementById('relTo').value;
+    const toField=document.getElementById('relToField').value;
+    if(!fromEntity||!toEntity||!fromField||!toField){toast('Preencha todos os campos','error');return;}
+    const d={fromEntity,fromField,toEntity,toField,toExternalSystem:null,type,label};
+    pushUndo();
+    if(editingRelId){const rel=state.relationships.find(r=>r.id===editingRelId);if(rel)Object.assign(rel,d);}
+    else state.relationships.push({id:uid(),...d});
+  }
   closeRelModal();renderAll();toast(editingRelId?'Relacionamento atualizado':'Relacionamento criado','success');
 }
 function closeRelModal(){document.getElementById('relModal').classList.remove('open');editingRelId=null;}
@@ -681,6 +807,7 @@ function renderRightPanel(){
     if(f.unique)badges.push('<span class="rp-field-badge uq">UQ</span>');
     if(f.index)badges.push('<span class="rp-field-badge idx">IDX</span>');
     if(!f.nullable)badges.push('<span class="rp-field-badge nn">NN</span>');
+    if(f.fileRef)badges.push('<span class="rp-field-badge fr">FILE</span>');
     h+=`<div class="rp-field-card" id="fc_${f.id}" draggable="true" ondragstart="dragFieldStart(event,'${e.id}','${f.id}')" ondragover="dragFieldOver(event,'${f.id}')" ondrop="dragFieldDrop(event,'${e.id}','${f.id}')" ondragend="dragFieldEnd(event)"><div class="rp-field-card-header" onclick="toggleFieldCard('${f.id}')">
       <span class="rp-drag-handle" onclick="event.stopPropagation()"><span class="material-icons-outlined">drag_indicator</span></span>
       <span class="rp-field-card-name">${esc(f.name)}</span><span class="rp-field-card-type">${esc(f.type)}</span>
@@ -700,19 +827,22 @@ function renderRightPanel(){
           <label class="rp-check-row"><input type="checkbox" ${f.nullable?'checked':''} onchange="updateField('${e.id}','${f.id}','nullable',this.checked)">Nullable</label>
           <label class="rp-check-row"><input type="checkbox" ${f.unique?'checked':''} onchange="updateField('${e.id}','${f.id}','unique',this.checked)">Unique</label>
           <label class="rp-check-row"><input type="checkbox" ${f.index?'checked':''} onchange="updateField('${e.id}','${f.id}','index',this.checked)">Index</label>
+          <label class="rp-check-row"><input type="checkbox" ${f.fileRef?'checked':''} onchange="updateField('${e.id}','${f.id}','fileRef',this.checked)">File Ref</label>
         </div>
       </div></div>`;
   });
   h+=`<button class="rp-add-btn" onclick="addField('${e.id}')"><span class="material-icons-outlined">add</span>Adicionar Campo</button></div>`;
 
-  const rels=state.relationships.filter(r=>r.fromEntity===e.id||r.toEntity===e.id);
+  const rels=state.relationships.filter(r=>r.fromEntity===e.id||(r.toEntity===e.id&&!r.toExternalSystem));
   if(rels.length){
     h+=`<div class="rp-section"><div class="rp-section-label">Relacionamentos (${rels.length})</div>`;
     rels.forEach(r=>{
-      const other=r.fromEntity===e.id?state.entities.find(x=>x.id===r.toEntity):state.entities.find(x=>x.id===r.fromEntity);
+      let otherName;
+      if(r.toExternalSystem){const ext=state.externalSystems.find(x=>x.id===r.toExternalSystem);otherName=(ext?'[EXT] '+esc(ext.name):'???');}
+      else{const other=r.fromEntity===e.id?state.entities.find(x=>x.id===r.toEntity):state.entities.find(x=>x.id===r.fromEntity);otherName=other?esc(other.name):'???';}
       const dir=r.fromEntity===e.id?'→':'←';
       h+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--ice);">
-        <span style="font-size:11px;font-weight:600;color:var(--navy);flex:1;">${esc(e.name)} ${dir} ${other?esc(other.name):'???'}</span>
+        <span style="font-size:11px;font-weight:600;color:var(--navy);flex:1;">${esc(e.name)} ${dir} ${otherName}</span>
         <span style="font-size:10px;color:var(--steel);font-family:monospace;">${r.type}</span>
         <button class="rp-field-action" onclick="openRelModal('${r.id}')" title="Editar"><span class="material-icons-outlined">edit</span></button>
         <button class="rp-field-action delete" onclick="deleteRelationship('${r.id}')" title="Excluir"><span class="material-icons-outlined">close</span></button></div>`;
@@ -780,7 +910,7 @@ function renderEntityList(){
 function renderCanvas(){
   const vp=document.getElementById('canvasViewport');
   const svg=document.getElementById('canvasSvg');
-  vp.querySelectorAll('.entity-card,.group-block').forEach(el=>el.remove());
+  vp.querySelectorAll('.entity-card,.group-block,.ext-card').forEach(el=>el.remove());
   const errors=validateAll();
   const errorEntIds=new Set(errors.map(e=>e.entityId).filter(Boolean));
 
@@ -806,7 +936,7 @@ function renderCanvas(){
 
     let fh=shown.map(f=>{
       let icon='remove',cls='';
-      if(f.primaryKey){icon='vpn_key';cls='pk';}else if(isFk(f.id)){icon='link';cls='fk';}else if(isRef(f.id)){icon='call_received';cls='ref';}else if(f.index){icon='bolt';cls='idx';}
+      if(f.primaryKey){icon='vpn_key';cls='pk';}else if(isFk(f.id)){icon='link';cls='fk';}else if(isRef(f.id)){icon='call_received';cls='ref';}else if(f.fileRef){icon='attach_file';cls='fr';}else if(f.index){icon='bolt';cls='idx';}
       return `<div class="entity-field-row" data-field-id="${f.id}"><span class="material-icons-outlined entity-field-icon ${cls}" style="font-size:13px;">${icon}</span><span class="entity-field-name">${esc(f.name)}</span><span class="entity-field-type">${esc(f.type)}</span></div>`;
     }).join('');
     if(hiddenCount>0)fh+=`<div class="entity-more">+ ${hiddenCount} campo${hiddenCount>1?'s':''}</div>`;
@@ -823,6 +953,21 @@ function renderCanvas(){
     </div><div class="entity-fields">${fh}</div>`;
     card.addEventListener('click',ev=>{if(!dragMoved)selectEntity(e.id);});
     card.addEventListener('contextmenu',ev=>{ev.preventDefault();entityCtxMenu(ev,e.id);});
+    vp.appendChild(card);
+  });
+
+  // ── External system cards ──
+  state.externalSystems.forEach(ext=>{
+    const card=document.createElement('div');
+    card.className='ext-card';
+    card.style.left=ext.x+'px';card.style.top=ext.y+'px';card.dataset.extId=ext.id;
+    card.innerHTML=`<div class="ext-header" data-drag="${ext.id}">
+      <span class="material-icons-outlined ext-icon">${serviceIcon(ext.service)}</span>
+      <div class="ext-name">${esc(ext.name)}</div>
+      <div class="ext-service-tag">${esc(ext.service)}</div>
+    </div>`;
+    card.addEventListener('contextmenu',ev=>{ev.preventDefault();extCtxMenu(ev,ext.id);});
+    card.addEventListener('dblclick',ev=>{ev.stopPropagation();openExtModal(ext.id);});
     vp.appendChild(card);
   });
 
@@ -855,11 +1000,20 @@ function renderCanvas(){
     let svgC=defs;
     state.relationships.forEach(r=>{
       const fromCard=vp.querySelector(`[data-entity-id="${r.fromEntity}"]`);
-      const toCard=vp.querySelector(`[data-entity-id="${r.toEntity}"]`);
       const fromE=state.entities.find(e=>e.id===r.fromEntity);
-      const toE=state.entities.find(e=>e.id===r.toEntity);
-      if(!fromCard||!toCard||!fromE||!toE)return;
-      const pts=getFieldConnectionPoints(fromCard,fromE,r.fromField,toCard,toE,r.toField);
+      if(!fromCard||!fromE)return;
+      let pts;
+      if(r.toExternalSystem){
+        const toCard=vp.querySelector(`[data-ext-id="${r.toExternalSystem}"]`);
+        const extSys=state.externalSystems.find(s=>s.id===r.toExternalSystem);
+        if(!toCard||!extSys)return;
+        pts=getExtConnectionPoints(fromCard,fromE,r.fromField,toCard,extSys);
+      } else {
+        const toCard=vp.querySelector(`[data-entity-id="${r.toEntity}"]`);
+        const toE=state.entities.find(e=>e.id===r.toEntity);
+        if(!toCard||!toE)return;
+        pts=getFieldConnectionPoints(fromCard,fromE,r.fromField,toCard,toE,r.toField);
+      }
       const dx=Math.abs(pts.x2-pts.x1);
       const offset=Math.max(60,dx*0.45);
       const cp1x=pts.fromSide==='right'?pts.x1+offset:pts.x1-offset;
@@ -867,8 +1021,9 @@ function renderCanvas(){
       const path=`M${pts.x1},${pts.y1} C${cp1x},${pts.y1} ${cp2x},${pts.y2} ${pts.x2},${pts.y2}`;
       const mx=(pts.x1+pts.x2)/2,my=(pts.y1+pts.y2)/2;
       const lbl=r.label||r.type;
+      const pathClass=r.toExternalSystem?'rel-path rel-path-ext':'rel-path';
       svgC+=`<g style="pointer-events:all;cursor:pointer;" ondblclick="openRelModal('${r.id}')" oncontextmenu="event.preventDefault();relCtxMenu(event,'${r.id}')">
-        <path d="${path}" class="rel-path" marker-end="url(#arrowEnd)"/>
+        <path d="${path}" class="${pathClass}" marker-end="url(#arrowEnd)"/>
         <rect x="${mx-20}" y="${my-16}" width="40" height="14" rx="3" fill="var(--white)" opacity="0.85" style="pointer-events:none;"/>
         <text x="${mx}" y="${my-6}" text-anchor="middle" class="rel-label">${esc(lbl)}</text></g>`;
     });
@@ -896,11 +1051,24 @@ function getFieldConnectionPoints(fromCard,fromE,fromFieldId,toCard,toE,toFieldI
   return{x1:fromX,y1:fromY,x2:toX,y2:toY,fromSide,toSide};
 }
 
+function getExtConnectionPoints(fromCard,fromE,fromFieldId,toCard,extSys){
+  const fromCX=fromE.x+fromCard.offsetWidth/2;
+  const toCX=extSys.x+toCard.offsetWidth/2;
+  const fromSide=toCX>fromCX?'right':'left';
+  const toSide=fromCX>toCX?'right':'left';
+  const fromRow=fromCard.querySelector(`[data-field-id="${fromFieldId}"]`);
+  const fromY=fromRow?fromE.y+fromRow.offsetTop+fromRow.offsetHeight/2:fromE.y+fromCard.offsetHeight/2;
+  const fromX=fromSide==='right'?fromE.x+fromCard.offsetWidth:fromE.x;
+  const toY=extSys.y+toCard.offsetHeight/2;
+  const toX=toSide==='right'?extSys.x+toCard.offsetWidth:extSys.x;
+  return{x1:fromX,y1:fromY,x2:toX,y2:toY,fromSide,toSide};
+}
+
 // ── DRAG ──
 document.addEventListener('mousedown',e=>{
   const hdr=e.target.closest('[data-drag]');
   if(hdr){
-    e.preventDefault();const id=hdr.dataset.drag;const ent=state.entities.find(x=>x.id===id);if(!ent)return;
+    e.preventDefault();const id=hdr.dataset.drag;const ent=state.entities.find(x=>x.id===id)||state.externalSystems.find(x=>x.id===id);if(!ent)return;
     dragEntity=id;dragMoved=false;
     dragOffset.x=(e.clientX-panX)/zoom-ent.x;dragOffset.y=(e.clientY-panY)/zoom-ent.y;
   }
@@ -916,7 +1084,7 @@ canvasArea.addEventListener('mousedown',e=>{
 
 window.addEventListener('mousemove',e=>{
   if(dragEntity){
-    dragMoved=true;const ent=state.entities.find(x=>x.id===dragEntity);
+    dragMoved=true;const ent=state.entities.find(x=>x.id===dragEntity)||state.externalSystems.find(x=>x.id===dragEntity);
     if(ent){ent.x=(e.clientX-panX)/zoom-dragOffset.x;ent.y=(e.clientY-panY)/zoom-dragOffset.y;renderCanvas();}
     return;
   }
@@ -1064,7 +1232,7 @@ function closeHelp(){document.getElementById('helpModal').classList.remove('open
 function showReport(){
   const name=state.project.name||'Projeto';
   const now=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  let h=`<div class="doc-header"><div><div class="doc-eyebrow">Polaris · Arquitetura de Dados</div><div class="doc-title">Modelo de <strong>Dados — ${esc(name)}</strong></div></div><div class="doc-meta">${now}<br>${state.entities.length} entidades · ${state.relationships.length} relacionamentos</div></div>`;
+  let h=`<div class="doc-header"><div><div class="doc-eyebrow">Polaris · Arquitetura de Dados</div><div class="doc-title">Modelo de <strong>Dados — ${esc(name)}</strong></div></div><div class="doc-meta">${now}<br>${state.entities.length} entidades · ${state.relationships.length} relacionamentos${state.externalSystems.length?' · '+state.externalSystems.length+' sistemas externos':''}</div></div>`;
 
   if(state.entities.length){
     h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">01</span><span class="chapter-title">Resumo do Modelo</span><div class="chapter-line"></div></div><table><thead><tr><th>Entidade</th><th>Campos</th><th>PK</th><th>Relações</th><th>Notas</th></tr></thead><tbody>`;
@@ -1078,15 +1246,19 @@ function showReport(){
     h+=`<div class="entity-block"><div class="entity-block-header"><div class="entity-block-color" style="background:${e.color}"></div><div class="entity-block-name">${esc(e.name)}</div></div>`;
     if(e.notes)h+=`<div class="entity-block-notes">${esc(e.notes)}</div>`;
     h+=`<table><thead><tr><th>Campo</th><th>Tipo Python</th><th>SQL</th><th>Atributos</th><th>Default</th></tr></thead><tbody>`;
-    e.fields.forEach(f=>{const sqlType=TYPE_TO_SQL[f.type]||f.type;const isFieldFk=state.relationships.some(r=>r.fromEntity===e.id&&r.fromField===f.id);const isFieldRef=state.relationships.some(r=>r.toEntity===e.id&&r.toField===f.id);const badges=[];if(f.primaryKey)badges.push('<span class="report-badge pk">PK</span>');if(!f.nullable)badges.push('<span class="report-badge nn">NN</span>');if(f.unique)badges.push('<span class="report-badge uq">UQ</span>');if(f.index)badges.push('<span class="report-badge idx">IDX</span>');if(f.autoIncrement)badges.push('<span class="report-badge ai">AI</span>');if(isFieldFk)badges.push('<span class="report-badge fk">FK</span>');if(isFieldRef)badges.push('<span class="report-badge ref">REF</span>');h+=`<tr><td><strong>${esc(f.name)}</strong></td><td style="font-family:monospace;font-size:11px;">${esc(f.type)}</td><td style="font-family:monospace;font-size:11px;color:var(--steel);">${sqlType}</td><td style="white-space:nowrap;">${badges.join('')||'<span style="color:var(--haze)">—</span>'}</td><td style="font-family:monospace;font-size:10px;word-break:break-all;">${esc(f.default)||'—'}</td></tr>`;});
+    e.fields.forEach(f=>{const sqlType=TYPE_TO_SQL[f.type]||f.type;const isFieldFk=state.relationships.some(r=>r.fromEntity===e.id&&r.fromField===f.id);const isFieldRef=state.relationships.some(r=>r.toEntity===e.id&&r.toField===f.id);const badges=[];if(f.primaryKey)badges.push('<span class="report-badge pk">PK</span>');if(!f.nullable)badges.push('<span class="report-badge nn">NN</span>');if(f.unique)badges.push('<span class="report-badge uq">UQ</span>');if(f.index)badges.push('<span class="report-badge idx">IDX</span>');if(f.autoIncrement)badges.push('<span class="report-badge ai">AI</span>');if(isFieldFk)badges.push('<span class="report-badge fk">FK</span>');if(isFieldRef)badges.push('<span class="report-badge ref">REF</span>');if(f.fileRef)badges.push('<span class="report-badge fr">FILE</span>');h+=`<tr><td><strong>${esc(f.name)}</strong></td><td style="font-family:monospace;font-size:11px;">${esc(f.type)}</td><td style="font-family:monospace;font-size:11px;color:var(--steel);">${sqlType}</td><td style="white-space:nowrap;">${badges.join('')||'<span style="color:var(--haze)">—</span>'}</td><td style="font-family:monospace;font-size:10px;word-break:break-all;">${esc(f.default)||'—'}</td></tr>`;});
     h+=`</tbody></table></div>`;
   });
   h+=`</div>`;
 
   if(state.relationships.length){
     h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">03</span><span class="chapter-title">Relacionamentos</span><div class="chapter-line"></div></div><table><thead><tr><th>Origem</th><th>Campo</th><th>→</th><th>Destino</th><th>Campo</th><th>Tipo</th><th>Label</th></tr></thead><tbody>`;
-    state.relationships.forEach(r=>{const fe=state.entities.find(e=>e.id===r.fromEntity),te=state.entities.find(e=>e.id===r.toEntity);const ff=fe?.fields.find(f=>f.id===r.fromField),tf=te?.fields.find(f=>f.id===r.toField);
-      h+=`<tr><td><strong>${fe?esc(fe.name):'???'}</strong></td><td style="font-family:monospace;">${ff?esc(ff.name):'???'}</td><td style="text-align:center;">→</td><td><strong>${te?esc(te.name):'???'}</strong></td><td style="font-family:monospace;">${tf?esc(tf.name):'???'}</td><td>${r.type}</td><td style="color:var(--steel);">${esc(r.label)||'—'}</td></tr>`;});
+    state.relationships.forEach(r=>{const fe=state.entities.find(e=>e.id===r.fromEntity);const ff=fe?.fields.find(f=>f.id===r.fromField);
+      if(r.toExternalSystem){const extSys=state.externalSystems.find(s=>s.id===r.toExternalSystem);
+        h+=`<tr><td><strong>${fe?esc(fe.name):'???'}</strong></td><td style="font-family:monospace;">${ff?esc(ff.name):'???'}</td><td style="text-align:center;">→</td><td><strong style="color:#5b7fa6;"><span style="font-size:10px;">☁</span> ${extSys?esc(extSys.name):'???'}</strong></td><td style="font-family:monospace;color:var(--steel);">${extSys?esc(extSys.service):'—'}</td><td>${r.type}</td><td style="color:var(--steel);">${esc(r.label)||'—'}</td></tr>`;
+      } else {const te=state.entities.find(e=>e.id===r.toEntity);const tf=te?.fields.find(f=>f.id===r.toField);
+        h+=`<tr><td><strong>${fe?esc(fe.name):'???'}</strong></td><td style="font-family:monospace;">${ff?esc(ff.name):'???'}</td><td style="text-align:center;">→</td><td><strong>${te?esc(te.name):'???'}</strong></td><td style="font-family:monospace;">${tf?esc(tf.name):'???'}</td><td>${r.type}</td><td style="color:var(--steel);">${esc(r.label)||'—'}</td></tr>`;
+      }});
     h+=`</tbody></table></div>`;
   }
 
@@ -1096,8 +1268,16 @@ function showReport(){
     h+=`</tbody></table></div>`;
   }
 
+  if(state.externalSystems.length){
+    let extChNum=state.groups.length?'05':'04';
+    h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">${extChNum}</span><span class="chapter-title">Sistemas Externos</span><div class="chapter-line"></div></div><table><thead><tr><th>Nome</th><th>Serviço</th><th>Notas</th></tr></thead><tbody>`;
+    state.externalSystems.forEach(s=>{h+=`<tr><td><strong style="color:#3a6080;">${esc(s.name)}</strong></td><td style="font-family:monospace;font-size:11px;">${esc(s.service)}</td><td style="font-size:11px;color:var(--steel);">${esc(s.notes)||'—'}</td></tr>`;});
+    h+=`</tbody></table></div>`;
+  }
+
   const errs=validateAll();
-  const chNum=state.groups.length?'05':'04';
+  let chOffset=(state.groups.length?1:0)+(state.externalSystems.length?1:0);
+  const chNum=chOffset>=2?'06':chOffset===1?'05':'04';
   if(errs.length){h+=`<div class="chapter"><div class="chapter-header"><span class="chapter-number">${chNum}</span><span class="chapter-title">Validações</span><div class="chapter-line"></div></div>`;errs.forEach(err=>{h+=`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--ice);"><span style="color:var(--red);font-size:14px;" class="material-icons-outlined">error_outline</span><span style="font-size:12px;color:var(--slate);">${esc(err.msg)}</span></div>`;});h+=`</div>`;}
 
   h+=`<div class="doc-footer"><span>Polaris Data Architect — ${esc(name)}</span><span>Gerado em ${now}</span></div>`;
